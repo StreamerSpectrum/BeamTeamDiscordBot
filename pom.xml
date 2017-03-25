@@ -12,11 +12,6 @@
 			<version>3.0.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>pro.beam</groupId>
-			<artifactId>interactive</artifactId>
-			<version>1.5.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
 			<groupId>net.dv8tion</groupId>
 			<artifactId>JDA</artifactId>
 			<version>3.0.0_160</version>
