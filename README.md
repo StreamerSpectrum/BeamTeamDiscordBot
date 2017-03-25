@@ -1,2 +1,2 @@
-# Beam_Team_Discord_Bot
+# The Beam Team Discord Bot
 A Discord bot to help you announce and manage your Beam.pro team!
