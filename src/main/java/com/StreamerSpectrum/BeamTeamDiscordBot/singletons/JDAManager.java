@@ -1,13 +1,14 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.singletons;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-
 import javax.security.auth.login.LoginException;
 
 import me.jagrosh.jdautilities.commandclient.CommandClient;
 import me.jagrosh.jdautilities.commandclient.CommandClientBuilder;
+import me.jagrosh.jdautilities.commandclient.examples.PingCommand;
 import me.jagrosh.jdautilities.waiter.EventWaiter;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
@@ -22,19 +23,15 @@ public abstract class JDAManager {
 	private static CommandClient commandClient;
 	private static EventWaiter waiter;
 
-	public static JDA getJDA() {
+	public static JDA getJDA() throws LoginException, IllegalArgumentException, RateLimitedException {
 		if (null == jda) {
-			try (BufferedReader br = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("/config.txt")))) {
+			try (BufferedReader br = new BufferedReader(new FileReader(new File("config.txt")))) {
 				String botToken = br.readLine();
 
-				jda = new JDABuilder(AccountType.BOT)
-						.setToken(botToken)
-						.setStatus(OnlineStatus.DO_NOT_DISTURB)
-						.setGame(Game.of("loading..."))		
-						.addListener(waiter)
-						.addListener(getCommandClient())
+				jda = new JDABuilder(AccountType.BOT).setToken(botToken).setStatus(OnlineStatus.DO_NOT_DISTURB)
+						.setGame(Game.of("loading...")).addListener(waiter).addListener(getCommandClient())
 						.buildAsync();
-			} catch (LoginException | IllegalArgumentException | RateLimitedException | IOException e) {
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -45,21 +42,20 @@ public abstract class JDAManager {
 
 	public static CommandClient getCommandClient() {
 		if (null == commandClient) {
-			commandClient = new CommandClientBuilder()
-					.useDefaultGame()
-					.setPrefix("!")
-					.addCommands(/*add commands here*/)
+			commandClient = new CommandClientBuilder().useDefaultGame().setPrefix("!")
+					.addCommands(/* add commands here */
+							new PingCommand())
 					.build();
 		}
-		
+
 		return commandClient;
 	}
-	
+
 	public static EventWaiter getWaiter() {
 		if (null == waiter) {
 			waiter = new EventWaiter();
 		}
-		
+
 		return waiter;
 	}
 }

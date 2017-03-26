@@ -16,3 +16,4 @@ hs_err_pid*
 .project
 *.classpath
 src/main/resources/config.txt
+resources/config.txt
