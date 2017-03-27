@@ -6,9 +6,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import javax.security.auth.login.LoginException;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamAdd;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamList;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamRemove;
+
 import me.jagrosh.jdautilities.commandclient.CommandClient;
 import me.jagrosh.jdautilities.commandclient.CommandClientBuilder;
-import me.jagrosh.jdautilities.commandclient.examples.PingCommand;
 import me.jagrosh.jdautilities.waiter.EventWaiter;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
@@ -25,11 +28,11 @@ public abstract class JDAManager {
 
 	public static JDA getJDA() throws LoginException, IllegalArgumentException, RateLimitedException {
 		if (null == jda) {
-			try (BufferedReader br = new BufferedReader(new FileReader(new File("config.txt")))) {
+			try (BufferedReader br = new BufferedReader(new FileReader(new File("resources/config.txt")))) {
 				String botToken = br.readLine();
 
 				jda = new JDABuilder(AccountType.BOT).setToken(botToken).setStatus(OnlineStatus.DO_NOT_DISTURB)
-						.setGame(Game.of("loading...")).addListener(waiter).addListener(getCommandClient())
+						.setGame(Game.of("loading...")).addListener(getWaiter()).addListener(getCommandClient())
 						.buildAsync();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -40,18 +43,21 @@ public abstract class JDAManager {
 		return jda;
 	}
 
-	public static CommandClient getCommandClient() {
+	private static CommandClient getCommandClient() {
 		if (null == commandClient) {
-			commandClient = new CommandClientBuilder().useDefaultGame().setPrefix("!")
+			commandClient = new CommandClientBuilder().useDefaultGame().setPrefix("!btb ")
 					.addCommands(/* add commands here */
-							new PingCommand())
+							new TeamAdd(),
+							new TeamRemove(),
+							new TeamList()
+							)
 					.build();
 		}
 
 		return commandClient;
 	}
 
-	public static EventWaiter getWaiter() {
+	private static EventWaiter getWaiter() {
 		if (null == waiter) {
 			waiter = new EventWaiter();
 		}

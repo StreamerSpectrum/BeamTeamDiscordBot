@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 
+@SuppressWarnings("serial")
 public class TeamSearchResponse extends ArrayList<BeamTeam> {
 
 }

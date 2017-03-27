@@ -5,6 +5,7 @@ import java.util.Date;
 
 import com.google.gson.annotations.SerializedName;
 
+@SuppressWarnings("serial")
 public class BeamTeamUser implements Serializable {
 	public Integer level;
 	public Social social;
