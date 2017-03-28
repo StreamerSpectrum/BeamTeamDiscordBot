@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import javax.security.auth.login.LoginException;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.RandomMember;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamRemove;
@@ -49,7 +50,8 @@ public abstract class JDAManager {
 					.addCommands(/* add commands here */
 							new TeamAdd(),
 							new TeamRemove(),
-							new TeamList()
+							new TeamList(),
+							new RandomMember()
 							)
 					.build();
 		}
