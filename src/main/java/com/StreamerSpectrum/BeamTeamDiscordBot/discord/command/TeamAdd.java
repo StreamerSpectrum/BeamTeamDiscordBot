@@ -21,20 +21,19 @@ public class TeamAdd extends Command {
 	@Override
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
-			BeamTeam team = CommandHelper.getTeam(event.getArgs(), event);
+			BeamTeam team = CommandHelper.getTeam(event, event.getArgs());
 
 			if (null != team) {
 				if (GuildManager.getGuild(event.getGuild().getId()).addTeam(team)) {
-					event.getChannel().sendMessage(String.format("%s has been added to the team tracker.", team.name))
-							.queue();
+					CommandHelper.sendMessage(event,
+							String.format("%s has been added to the team tracker.", team.name));
 				} else {
-					event.getChannel()
-							.sendMessage(String.format("%s is already in the list of tracked teams.", team.name))
-							.queue();
+					CommandHelper.sendMessage(event,
+							String.format("%s is already in the list of tracked teams.", team.name));
 				}
 			}
 		} else {
-			event.getChannel().sendMessage("Missing arguments from command!").queue();
+			CommandHelper.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 

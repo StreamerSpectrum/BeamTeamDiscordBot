@@ -26,14 +26,14 @@ public class TeamList extends Command {
 
 		if (teams.size() > 0) {
 			StringBuilder sb = new StringBuilder("This server is tracking the following teams: ");
-			
+
 			for (BeamTeam team : teams) {
 				sb.append(team.token).append(", ");
 			}
 
-			event.getChannel().sendMessage(sb.toString().substring(0, sb.lastIndexOf(","))).queue();
+			CommandHelper.sendMessage(event, sb.toString().substring(0, sb.lastIndexOf(",")));
 		} else {
-			event.getChannel().sendMessage("This server is not tracking any teams.").queue();
+			CommandHelper.sendMessage(event, "This server is not tracking any teams.");
 		}
 	}
 

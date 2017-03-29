@@ -1,7 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
 
-import java.awt.Color;
-import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -13,7 +11,6 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
-import net.dv8tion.jda.core.EmbedBuilder;
 
 public class RandomMember extends Command {
 
@@ -26,37 +23,22 @@ public class RandomMember extends Command {
 	@Override
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
-			BeamTeam team = CommandHelper.getTeam(event.getArgs(), event);
+			BeamTeam team = CommandHelper.getTeam(event, event.getArgs());
 
 			if (null != team) {
 				try {
 					List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
 					BeamTeamUser member = teamMembers.get(new Random().nextInt(teamMembers.size()));
 
-					event.getChannel().sendMessage(new EmbedBuilder()
-							.setTitle(member.username, String.format("https://beam.pro/%s", member.username))
-							.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?w=64&h=64", member.id))
-							.setDescription(StringUtils.isEmpty(member.bio) ? "No bio" : member.bio)
-							.addField("Followers", Integer.toString(member.channel.numFollowers), true)
-							.addField("Views", Integer.toString(member.channel.viewersTotal), true)
-							.addField("Partnered", member.channel.partnered ? "Yes" : "No", true)
-							.addField("Primary Team", BeamManager.getTeam(member.primaryTeam).name, true)
-							.setFooter("Beam.pro",
-									"https://github.com/WatchBeam/beam-branding-kit/blob/master/png/logo-ball.png?raw=true")
-							.setTimestamp(Instant.now()).setColor(Color.CYAN).build()).queue();
+					CommandHelper.sendUserEmbed(event, member);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} catch (ExecutionException e) {
-					event.getChannel()
-							.sendMessage(
-									"Sorry, something went wrong. Please try again. If the issue continues, please contact a developer.")
-							.queue();
+					CommandHelper.sendMessage(event, "Missing arguments from command!");
 				}
 			}
 		} else {
-			event.getChannel()
-			.sendMessage("Missing arguments from command!")
-			.queue();
+			CommandHelper.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 

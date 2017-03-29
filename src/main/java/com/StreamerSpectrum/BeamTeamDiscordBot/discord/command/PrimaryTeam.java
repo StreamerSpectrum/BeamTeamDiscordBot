@@ -1,81 +1,68 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
-import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
-
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
+import net.dv8tion.jda.core.EmbedBuilder;
 
 public class PrimaryTeam extends Command {
 
 	public PrimaryTeam() {
 		this.name = "primaryteam";
-		this.help = "returns a list of users from [teamNameOrID] whose primary team matches/doesn't match [isPrimary] the team";
-		this.arguments = "teamNameOrID isPrimary";
+		this.help = "returns an embedded message that details who on the team have it set as their primary, and who don't";
+		this.arguments = "teamNameOrID";
 	}
 
 	@Override
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
-			String args[] = event.getArgs().split(" ");
+			String args = event.getArgs();
+			BeamTeam team = CommandHelper.getTeam(event, args);
 
-			if (args.length > 0) {
-				BeamTeam team = CommandHelper.getTeam(args[0], event);
+			if (null != team) {
+				int primaryTotal = 0, nonPrimaryTotal = 0;
+				StringBuilder primaryMembers = new StringBuilder();
+				StringBuilder nonPrimaryMembers = new StringBuilder();
 
-				if (team != null) {
-					boolean isPrimary = args.length == 1 || (args.length == 2 && Boolean.parseBoolean(args[1]));
-					int total = 0;
+				List<BeamTeamUser> members = CommandHelper.getTeamMembers(event, team);
 
-					try {
-						List<BeamTeamUser> members = BeamManager.getTeamMembers(team);
-
-						StringBuilder sb = new StringBuilder();
-
-						if (isPrimary) {
-							sb.append(String.format("Members with %s as their primary team: ", team.name));
-
-							for (BeamTeamUser member : members) {
-								if (member.primaryTeam != null && member.primaryTeam.intValue() == team.id.intValue()) {
-									sb.append(String.format("%s, ", member.username));
-									++total;
-								}
-							}
-						} else {
-							sb.append(String.format("Members without %s as their primary team: ", team.name));
-
-							for (BeamTeamUser member : members) {
-								if (member.primaryTeam == null || member.primaryTeam.intValue() != team.id.intValue()) {
-									sb.append(String.format("%s, ", member.username));
-									++total;
-								}
-							}
-						}
-						
-						if (sb.toString().contains(",")) {
-							event.getChannel().sendMessage(sb.substring(0, sb.lastIndexOf(","))).queue();
-						} else {
-							event.getChannel().sendMessage(sb.append("None").toString()).queue();
-						}
-
-						event.getChannel().sendMessage(String.format("Total: %d", total)).queue();
-
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					} catch (ExecutionException e) {
-						event.getChannel()
-								.sendMessage(String.format("Unable to retrieve team members for %s.", team.name))
-								.queue();
+				for (BeamTeamUser member : members) {
+					if (member.primaryTeam != null && member.primaryTeam.intValue() == team.id.intValue()) {
+						primaryMembers.append(String.format("%s\n", member.username));
+						++primaryTotal;
+					} else {
+						nonPrimaryMembers.append(String.format("%s\n", member.username));
+						++nonPrimaryTotal;
 					}
 				}
+
+				if (StringUtils.isBlank(primaryMembers.toString())) {
+					primaryMembers.append("None");
+				}
+
+				if (StringUtils.isBlank(nonPrimaryMembers.toString())) {
+					primaryMembers.append("None");
+				}
+
+				CommandHelper.sendMessage(event,
+						new EmbedBuilder()
+								.setTitle(String.format("Primary Team results for %s", team.name),
+										String.format("https://beam.pro/team/%s", team.token))
+								.setThumbnail(team.logoUrl)
+								.addField(String.format("Primary Team Match | %d", primaryTotal),
+										primaryMembers.toString(), true)
+								.addField(String.format("Primary Team Other | %d", nonPrimaryTotal),
+										nonPrimaryMembers.toString(), true)
+								.addBlankField(true).setFooter("Beam.pro", CommandHelper.BEAM_LOGO_URL)
+								.setTimestamp(Instant.now()).setColor(CommandHelper.COLOR).build());
 			}
 		} else {
-			event.getChannel().sendMessage("Missing arguments from command!").queue();
+			CommandHelper.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 
