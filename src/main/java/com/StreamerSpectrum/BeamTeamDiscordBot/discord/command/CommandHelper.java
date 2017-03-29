@@ -1,0 +1,36 @@
+package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
+
+import java.util.concurrent.ExecutionException;
+
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
+
+import me.jagrosh.jdautilities.commandclient.CommandEvent;
+
+public abstract class CommandHelper {
+
+	public static BeamTeam getTeam(String args, CommandEvent event) {
+		BeamTeam team = null;
+		
+		try {
+			int id = Integer.parseInt(args);
+			team = BeamManager.getTeam(id);
+		} catch (NumberFormatException e) {
+			try {
+				team = BeamManager.getTeam(args);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			} catch (ExecutionException e1) {
+				event.getChannel().sendMessage(String.format("Sorry, I can't find the Beam team named %s.", args))
+						.queue();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			event.getChannel().sendMessage(String.format("Sorry, I can't find the Beam team with ID %s.", args))
+					.queue();
+		}
+		
+		return team;
+	}
+}

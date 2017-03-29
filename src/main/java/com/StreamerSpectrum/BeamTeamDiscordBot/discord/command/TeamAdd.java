@@ -1,9 +1,8 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
 
-import java.util.concurrent.ExecutionException;
+import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
-import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
 
 import me.jagrosh.jdautilities.commandclient.Command;
@@ -21,37 +20,21 @@ public class TeamAdd extends Command {
 
 	@Override
 	protected void execute(CommandEvent event) {
-		String args = event.getArgs();
-		BeamTeam team = null;
+		if (!StringUtils.isBlank(event.getArgs())) {
+			BeamTeam team = CommandHelper.getTeam(event.getArgs(), event);
 
-		try {
-			int id = Integer.parseInt(args);
-			team = BeamManager.getTeam(id);
-		} catch (NumberFormatException e) {
-			try {
-				team = BeamManager.getTeam(args);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			} catch (ExecutionException e1) {
-				event.getChannel().sendMessage(String.format("Sorry, I can't find the Beam team named %s.", args))
-						.queue();
+			if (null != team) {
+				if (GuildManager.getGuild(event.getGuild().getId()).addTeam(team)) {
+					event.getChannel().sendMessage(String.format("%s has been added to the team tracker.", team.name))
+							.queue();
+				} else {
+					event.getChannel()
+							.sendMessage(String.format("%s is already in the list of tracked teams.", team.name))
+							.queue();
+				}
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			event.getChannel().sendMessage(String.format("Sorry, I can't find the Beam team with ID %s.", args))
-					.queue();
-		}
-
-		if (null != team) {
-			if (GuildManager.getGuild(event.getGuild().getId()).addTeam(team)) {
-				event.getChannel().sendMessage(String.format("%s has been added to the team tracker.", team.name))
-						.queue();
-			} else {
-				event.getChannel()
-						.sendMessage(String.format("%s is already in the list of tracked teams.", team.name))
-						.queue();
-			}
+		} else {
+			event.getChannel().sendMessage("Missing arguments from command!").queue();
 		}
 	}
 

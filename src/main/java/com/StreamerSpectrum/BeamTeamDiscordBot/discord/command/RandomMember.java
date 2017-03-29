@@ -25,52 +25,38 @@ public class RandomMember extends Command {
 
 	@Override
 	protected void execute(CommandEvent event) {
-		String args = event.getArgs();
-		BeamTeam team = null;
+		if (!StringUtils.isBlank(event.getArgs())) {
+			BeamTeam team = CommandHelper.getTeam(event.getArgs(), event);
 
-		try {
-			int id = Integer.parseInt(args);
-			team = BeamManager.getTeam(id);
-		} catch (NumberFormatException e) {
-			try {
-				team = BeamManager.getTeam(args);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			} catch (ExecutionException e1) {
-				event.getChannel().sendMessage(String.format("Sorry, I can't find the Beam team named %s.", args))
-						.queue();
+			if (null != team) {
+				try {
+					List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
+					BeamTeamUser member = teamMembers.get(new Random().nextInt(teamMembers.size()));
+
+					event.getChannel().sendMessage(new EmbedBuilder()
+							.setTitle(member.username, String.format("https://beam.pro/%s", member.username))
+							.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?w=64&h=64", member.id))
+							.setDescription(StringUtils.isEmpty(member.bio) ? "No bio" : member.bio)
+							.addField("Followers", Integer.toString(member.channel.numFollowers), true)
+							.addField("Views", Integer.toString(member.channel.viewersTotal), true)
+							.addField("Partnered", member.channel.partnered ? "Yes" : "No", true)
+							.addField("Primary Team", BeamManager.getTeam(member.primaryTeam).name, true)
+							.setFooter("Beam.pro",
+									"https://github.com/WatchBeam/beam-branding-kit/blob/master/png/logo-ball.png?raw=true")
+							.setTimestamp(Instant.now()).setColor(Color.CYAN).build()).queue();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					event.getChannel()
+							.sendMessage(
+									"Sorry, something went wrong. Please try again. If the issue continues, please contact a developer.")
+							.queue();
+				}
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			event.getChannel().sendMessage(String.format("Sorry, I can't find the Beam team with ID %s.", args))
-					.queue();
-		}
-
-		if (null != team) {
-			try {
-				List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
-				BeamTeamUser member = teamMembers.get(new Random().nextInt(teamMembers.size()));
-
-				event.getChannel().sendMessage(new EmbedBuilder()
-						.setTitle(member.username, String.format("https://beam.pro/%s", member.username))
-						.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?w=64&h=64", member.id))
-						.setDescription(StringUtils.isEmpty(member.bio) ? "No bio" : member.bio)
-						.addField("Followers", Integer.toString(member.channel.numFollowers), true)
-						.addField("Views", Integer.toString(member.channel.viewersTotal), true)
-						.addField("Partnered", member.channel.partnered ? "Yes" : "No", true)
-						.addField("Primary Team", BeamManager.getTeam(member.primaryTeam).name, true)
-						.setFooter("Beam.pro",
-								"https://github.com/WatchBeam/beam-branding-kit/blob/master/png/logo-ball.png?raw=true")
-						.setTimestamp(Instant.now()).setColor(Color.CYAN).build()).queue();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				event.getChannel()
-						.sendMessage(
-								"Sorry, something went wrong. Please try again. If the issue continues, please contact a developer.")
-						.queue();
-			}
+		} else {
+			event.getChannel()
+			.sendMessage("Missing arguments from command!")
+			.queue();
 		}
 	}
 

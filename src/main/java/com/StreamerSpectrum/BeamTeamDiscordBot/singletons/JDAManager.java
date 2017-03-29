@@ -10,6 +10,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.RandomMember;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.PrimaryTeam;
 
 import me.jagrosh.jdautilities.commandclient.CommandClient;
 import me.jagrosh.jdautilities.commandclient.CommandClientBuilder;
@@ -51,7 +52,8 @@ public abstract class JDAManager {
 							new TeamAdd(),
 							new TeamRemove(),
 							new TeamList(),
-							new RandomMember()
+							new RandomMember(),
+							new PrimaryTeam()
 							)
 					.build();
 		}
