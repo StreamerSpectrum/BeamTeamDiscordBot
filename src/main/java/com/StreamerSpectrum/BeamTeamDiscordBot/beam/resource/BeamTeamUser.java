@@ -5,6 +5,8 @@ import java.util.Date;
 
 import com.google.gson.annotations.SerializedName;
 
+import pro.beam.api.resource.BeamUser;
+
 @SuppressWarnings("serial")
 public class BeamTeamUser implements Serializable {
 	public Integer level;
@@ -20,7 +22,7 @@ public class BeamTeamUser implements Serializable {
 	public Date createdAt;
 	public Date updatedAt;
 	public Channel channel;
-	
+
 	@SerializedName("TeamMembership")
 	public TeamMembership teamMembership;
 
@@ -69,5 +71,16 @@ public class BeamTeamUser implements Serializable {
 		public String youtube;
 		public String discord;
 		public String player;
+	}
+
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return (obj instanceof BeamTeamUser && ((BeamTeamUser) obj).id == this.id)
+				|| (obj instanceof BeamUser && ((BeamUser) obj).id == this.id);
 	}
 }

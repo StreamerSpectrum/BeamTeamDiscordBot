@@ -23,10 +23,8 @@ public class TeamsService extends AbstractHTTPService {
 	}
 
 	public ListenableFuture<TeamUserSearchResponse> teamMembersOf(BeamTeam team, int page, int limit) {
-		limit = limit < 1 ? 1 : limit > 50 ? 50 : limit;
-		page = page < 0 ? 0 : page;
-		
 		return this.get(String.format("%d/users", team.id), TeamUserSearchResponse.class,
-				BeamHttpClient.getArgumentsBuilder().put("id", team.id).put("page", page).put("limit", limit).build());
+				BeamHttpClient.getArgumentsBuilder().put("id", team.id).put("page", Math.max(0, page))
+						.put("limit", Math.min(50, limit)).build());
 	}
 }

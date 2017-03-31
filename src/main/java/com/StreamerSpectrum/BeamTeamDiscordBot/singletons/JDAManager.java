@@ -10,6 +10,9 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.RandomMember;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.TeamRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberInfo;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberList;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.FollowReport;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.PrimaryTeam;
 
 import me.jagrosh.jdautilities.commandclient.CommandClient;
@@ -48,12 +51,15 @@ public abstract class JDAManager {
 	private static CommandClient getCommandClient() {
 		if (null == commandClient) {
 			commandClient = new CommandClientBuilder().useDefaultGame().setPrefix("!btb ")
-					.addCommands(/* add commands here */
+					.addCommands(
 							new TeamAdd(),
 							new TeamRemove(),
 							new TeamList(),
 							new RandomMember(),
-							new PrimaryTeam()
+							new PrimaryTeam(),
+							new MemberInfo(),
+							new FollowReport(),
+							new MemberList()
 							)
 					.build();
 		}
@@ -61,7 +67,7 @@ public abstract class JDAManager {
 		return commandClient;
 	}
 
-	private static EventWaiter getWaiter() {
+	public static EventWaiter getWaiter() {
 		if (null == waiter) {
 			waiter = new EventWaiter();
 		}

@@ -16,7 +16,7 @@ public class RandomMember extends Command {
 
 	public RandomMember() {
 		this.name = "randommember";
-		this.help = "displays info about a random member from the specified team";
+		this.help = "Takes in a team and displays info about a random member from it.";
 		this.arguments = "teamNameOrID";
 	}
 
@@ -30,11 +30,11 @@ public class RandomMember extends Command {
 					List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
 					BeamTeamUser member = teamMembers.get(new Random().nextInt(teamMembers.size()));
 
-					CommandHelper.sendUserEmbed(event, member);
+					CommandHelper.sendTeamUserEmbed(event, member);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} catch (ExecutionException e) {
-					CommandHelper.sendMessage(event, "Missing arguments from command!");
+					CommandHelper.sendMessage(event, "Cannot find team members for %s!", team.name);
 				}
 			}
 		} else {

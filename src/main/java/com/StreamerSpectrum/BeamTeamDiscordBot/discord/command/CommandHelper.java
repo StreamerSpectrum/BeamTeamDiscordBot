@@ -4,17 +4,21 @@ import java.awt.Color;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
 
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
+import me.jagrosh.jdautilities.menu.pagination.PaginatorBuilder;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageEmbed;
+import net.dv8tion.jda.core.exceptions.PermissionException;
 
 public abstract class CommandHelper {
 	public static final Color COLOR = new Color(76, 144, 243);
@@ -57,7 +61,37 @@ public abstract class CommandHelper {
 		return members;
 	}
 
-	public static void sendUserEmbed(CommandEvent event, BeamTeamUser member) {
+	public static PaginatorBuilder buildPagination(CommandEvent event, String[] listItems, int numCols, String title) {
+		return new PaginatorBuilder().setText(title).setItems(listItems)
+				.setColumns(numCols < 1 ? 1 : numCols > 3 ? 3 : numCols).setFinalAction(m -> {
+					try {
+						m.clearReactions().queue();
+					} catch (PermissionException e) {
+					}
+				}).setItemsPerPage(10).waitOnSinglePage(false).useNumberedItems(true).showPageNumbers(true)
+				.setEventWaiter(JDAManager.getWaiter()).setTimeout(1, TimeUnit.MINUTES).setUsers(event.getAuthor())
+				.setColor(CommandHelper.COLOR);
+	}
+
+	public static PaginatorBuilder buildPagination(CommandEvent event, String[] listItems, int numCols, String format,
+			Object... args) {
+		return buildPagination(event, listItems, numCols, String.format(format, args));
+	}
+
+	public static void sendPagination(CommandEvent event, String[] listItems, int numCols, String title) {
+		sendPagination(event, buildPagination(event, listItems, numCols, title));
+	}
+
+	public static void sendPagination(CommandEvent event, String[] listItems, int numCols, String format,
+			Object... args) {
+		sendPagination(event, buildPagination(event, listItems, numCols, format, args));
+	}
+
+	public static void sendPagination(CommandEvent event, PaginatorBuilder builder) {
+		builder.build().paginate(event.getChannel(), 0);
+	}
+
+	public static void sendTeamUserEmbed(CommandEvent event, BeamTeamUser member) {
 		try {
 			sendMessage(event,
 					new EmbedBuilder().setTitle(member.username, String.format("https://beam.pro/%s", member.username))
@@ -67,6 +101,8 @@ public abstract class CommandHelper {
 							.addField("Views", Integer.toString(member.channel.viewersTotal), true)
 							.addField("Partnered", member.channel.partnered ? "Yes" : "No", true)
 							.addField("Primary Team", BeamManager.getTeam(member.primaryTeam).name, true)
+							.addField("Joined Beam", member.createdAt.toString(), true)
+							.addField("Member Since", member.teamMembership.createdAt.toString(), true)
 							.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg", member.channel.id))
 							.setFooter("Beam.pro", BEAM_LOGO_URL).setTimestamp(Instant.now()).setColor(COLOR).build());
 		} catch (InterruptedException e) {
@@ -77,19 +113,23 @@ public abstract class CommandHelper {
 		}
 	}
 
-	public static void sendMessage(CommandEvent event, Message msg) {
+	public static String sendMessage(CommandEvent event, Message msg) {
 		event.getChannel().sendMessage(msg).queue();
+		return event.getChannel().getLatestMessageId();
 	}
 
-	public static void sendMessage(CommandEvent event, MessageEmbed embed) {
+	public static String sendMessage(CommandEvent event, MessageEmbed embed) {
 		event.getChannel().sendMessage(embed).queue();
+		return event.getChannel().getLatestMessageId();
 	}
 
-	public static void sendMessage(CommandEvent event, String text) {
+	public static String sendMessage(CommandEvent event, String text) {
 		event.getChannel().sendMessage(text).queue();
+		return event.getChannel().getLatestMessageId();
 	}
 
-	public static void sendMessage(CommandEvent event, String format, Object... args) {
+	public static String sendMessage(CommandEvent event, String format, Object... args) {
 		event.getChannel().sendMessage(String.format(format, args)).queue();
+		return event.getChannel().getLatestMessageId();
 	}
 }
