@@ -18,10 +18,10 @@ import pro.beam.api.services.impl.UsersService;
 
 public abstract class BeamManager {
 
-	private static BeamAPI beam;
-	private static BeamConstellation constellation;
+	private static BeamAPI				beam;
+	private static BeamConstellation	constellation;
 
-	private static RateLimit userReadLimit;
+	private static RateLimit			userReadLimit;
 
 	public static BeamAPI getBeam() {
 		if (null == beam) {

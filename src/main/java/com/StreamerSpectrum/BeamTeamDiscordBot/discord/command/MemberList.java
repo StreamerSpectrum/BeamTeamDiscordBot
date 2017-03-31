@@ -32,7 +32,7 @@ public class MemberList extends Command {
 				args.add(team.token);
 			}
 
-			memberListHelper(event, args.toArray(new String[]{}));
+			memberListHelper(event, args.toArray(new String[] {}));
 		} else {
 			CommandHelper.sendMessage(event, "Missing arguments from command!");
 		}

@@ -4,10 +4,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class RateLimit {
-	private final int REQUEST_COUNT;
-	private final int TIME_INTERVAL;
-	private volatile int curCount;
-	private Timer timer;
+	private final int		REQUEST_COUNT;
+	private final int		TIME_INTERVAL;
+	private volatile int	curCount;
+	private Timer			timer;
 
 	public RateLimit(int requestCount, int timeInterval) {
 		REQUEST_COUNT = requestCount;

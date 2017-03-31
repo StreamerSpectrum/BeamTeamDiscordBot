@@ -27,9 +27,9 @@ import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public abstract class JDAManager {
 
-	private static JDA jda;
-	private static CommandClient commandClient;
-	private static EventWaiter waiter;
+	private static JDA				jda;
+	private static CommandClient	commandClient;
+	private static EventWaiter		waiter;
 
 	public static JDA getJDA() throws LoginException, IllegalArgumentException, RateLimitedException {
 		if (null == jda) {
@@ -51,16 +51,8 @@ public abstract class JDAManager {
 	private static CommandClient getCommandClient() {
 		if (null == commandClient) {
 			commandClient = new CommandClientBuilder().useDefaultGame().setPrefix("!btb ")
-					.addCommands(
-							new TeamAdd(),
-							new TeamRemove(),
-							new TeamList(),
-							new RandomMember(),
-							new PrimaryTeam(),
-							new MemberInfo(),
-							new FollowReport(),
-							new MemberList()
-							)
+					.addCommands(new TeamAdd(), new TeamRemove(), new TeamList(), new RandomMember(), new PrimaryTeam(),
+							new MemberInfo(), new FollowReport(), new MemberList())
 					.build();
 		}
 

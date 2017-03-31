@@ -21,8 +21,8 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.exceptions.PermissionException;
 
 public abstract class CommandHelper {
-	public static final Color COLOR = new Color(76, 144, 243);
-	public static final String BEAM_LOGO_URL = "https://github.com/WatchBeam/beam-branding-kit/blob/master/png/logo-ball.png?raw=true";
+	public static final Color	COLOR			= new Color(76, 144, 243);
+	public static final String	BEAM_LOGO_URL	= "https://github.com/WatchBeam/beam-branding-kit/blob/master/png/logo-ball.png?raw=true";
 
 	public static BeamTeam getTeam(CommandEvent event, String teamNameOrID) {
 		BeamTeam team = null;
@@ -66,8 +66,7 @@ public abstract class CommandHelper {
 				.setColumns(numCols < 1 ? 1 : numCols > 3 ? 3 : numCols).setFinalAction(m -> {
 					try {
 						m.clearReactions().queue();
-					} catch (PermissionException e) {
-					}
+					} catch (PermissionException e) {}
 				}).setItemsPerPage(10).waitOnSinglePage(false).useNumberedItems(true).showPageNumbers(true)
 				.setEventWaiter(JDAManager.getWaiter()).setTimeout(1, TimeUnit.MINUTES).setUsers(event.getAuthor())
 				.setColor(CommandHelper.COLOR);
