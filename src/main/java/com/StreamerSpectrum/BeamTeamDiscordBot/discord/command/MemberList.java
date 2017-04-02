@@ -23,10 +23,10 @@ public class MemberList extends Command {
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
 			memberListHelper(event, event.getArgs().split(" "));
-		} else if (!GuildManager.getGuild(event.getGuild().getId()).getTeams().isEmpty()) {
+		} else if (!GuildManager.getGuild(event.getGuild().getId()).getTracker().getTeams().isEmpty()) {
 			List<String> args = new ArrayList<String>();
 			List<BeamTeam> trackedTeams = new ArrayList<BeamTeam>(
-					GuildManager.getGuild(event.getGuild().getId()).getTeams().values());
+					GuildManager.getGuild(event.getGuild().getId()).getTracker().getTeams().values());
 
 			for (BeamTeam team : trackedTeams) {
 				args.add(team.token);

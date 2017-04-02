@@ -1,9 +1,10 @@
-package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
+package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
 
 import me.jagrosh.jdautilities.commandclient.Command;
@@ -22,7 +23,7 @@ public class TeamList extends Command {
 	protected void execute(CommandEvent event) {
 
 		List<BeamTeam> teams = new ArrayList<BeamTeam>(
-				GuildManager.getGuild(event.getGuild().getId()).getTeams().values());
+				GuildManager.getGuild(event.getGuild().getId()).getTracker().getTeams().values());
 
 		if (teams.size() > 0) {
 			StringBuilder teamsSB = new StringBuilder();

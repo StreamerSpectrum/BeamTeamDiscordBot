@@ -3,6 +3,7 @@ package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
 import java.awt.Color;
 import java.time.Instant;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +20,7 @@ import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.exceptions.PermissionException;
+import pro.beam.api.resource.channel.BeamChannel;
 
 public abstract class CommandHelper {
 	public static final Color	COLOR			= new Color(76, 144, 243);
@@ -47,16 +49,33 @@ public abstract class CommandHelper {
 		return team;
 	}
 
-	public static List<BeamTeamUser> getTeamMembers(CommandEvent event, BeamTeam team) {
-		List<BeamTeamUser> members = null;
+	public static BeamChannel getChannel(CommandEvent event, String nameOrID) {
+		BeamChannel channel = null;
 
 		try {
-			members = BeamManager.getTeamMembers(team);
+			int id = Integer.parseInt(nameOrID);
+			channel = BeamManager.getChannel(id);
+		} catch (NumberFormatException e) {
+			try {
+				channel = BeamManager.getChannel(nameOrID);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			} catch (ExecutionException e1) {
+				sendMessage(event, String.format("Sorry, I can't find the Beam channel named %s.", nameOrID));
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (ExecutionException e) {
-			CommandHelper.sendMessage(event, String.format("Unable to retrieve team members for %s.", team.name));
+			sendMessage(event, String.format("Sorry, I can't find the Beam channel with ID %s.", nameOrID));
 		}
+
+		return channel;
+	}
+
+	public static List<BeamTeamUser> getTeamMembers(CommandEvent event, BeamTeam team) {
+		List<BeamTeamUser> members = null;
+
+		members = BeamManager.getTeamMembers(team);
 
 		return members;
 	}
@@ -95,14 +114,15 @@ public abstract class CommandHelper {
 			sendMessage(event,
 					new EmbedBuilder().setTitle(member.username, String.format("https://beam.pro/%s", member.username))
 							.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?w=64&h=64", member.id))
-							.setDescription(StringUtils.isEmpty(member.bio) ? "No bio" : member.bio)
+							.setDescription(StringUtils.isBlank(member.bio) ? "No bio" : member.bio)
 							.addField("Followers", Integer.toString(member.channel.numFollowers), true)
 							.addField("Views", Integer.toString(member.channel.viewersTotal), true)
 							.addField("Partnered", member.channel.partnered ? "Yes" : "No", true)
 							.addField("Primary Team", BeamManager.getTeam(member.primaryTeam).name, true)
 							.addField("Joined Beam", member.createdAt.toString(), true)
 							.addField("Member Since", member.teamMembership.createdAt.toString(), true)
-							.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg", member.channel.id))
+							.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_%d",
+									member.channel.id, new Random().nextInt()))
 							.setFooter("Beam.pro", BEAM_LOGO_URL).setTimestamp(Instant.now()).setColor(COLOR).build());
 		} catch (InterruptedException e) {
 			e.printStackTrace();

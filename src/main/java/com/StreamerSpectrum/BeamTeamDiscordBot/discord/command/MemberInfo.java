@@ -3,7 +3,6 @@ package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,40 +31,38 @@ public class MemberInfo extends Command {
 			BeamTeam team = CommandHelper.getTeam(event, teamArg);
 
 			if (null != team) {
-				try {
-					List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
+				List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
 
-					for (String userArg : userArgs) {
-						BeamTeamUser foundMember = null;
+				for (String userArg : userArgs) {
+					BeamTeamUser foundMember = null;
 
-						for (int retry = 0; retry < 5 && foundMember == null; ++retry) {
-							for (BeamTeamUser member : teamMembers) {
-								try {
-									if (member.id.intValue() == Integer.parseInt(userArg)) {
-										foundMember = member;
-										break;
-									}
-								} catch (NumberFormatException e1) {
-									if (StringUtils.equalsIgnoreCase(member.username, userArg)) {
-										foundMember = member;
-										break;
-									}
+					for (int retry = 0; retry < 5 && foundMember == null; ++retry) {
+						for (BeamTeamUser member : teamMembers) {
+							try {
+								if (member.id.intValue() == Integer.parseInt(userArg)) {
+									foundMember = member;
+									break;
+								}
+							} catch (NumberFormatException e1) {
+								if (StringUtils.equalsIgnoreCase(member.username, userArg)) {
+									foundMember = member;
+									break;
 								}
 							}
+						}
 
-							if (null != foundMember) {
-								CommandHelper.sendTeamUserEmbed(event, foundMember);
-							} else if (retry >= 4) {
-								CommandHelper.sendMessage(event, "Unable to find information for user %s.", userArg);
-							} else {
+						if (null != foundMember) {
+							CommandHelper.sendTeamUserEmbed(event, foundMember);
+						} else if (retry < 5) {
+							try {
 								TimeUnit.SECONDS.sleep(5);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
 							}
+						} else {
+							CommandHelper.sendMessage(event, "Unable to find information for user %s.", userArg);
 						}
 					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					CommandHelper.sendMessage(event, "Cannot find team members for %s!", team.name);
 				}
 			}
 		} else {

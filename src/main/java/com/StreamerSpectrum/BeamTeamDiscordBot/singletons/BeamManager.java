@@ -2,6 +2,7 @@ package com.StreamerSpectrum.BeamTeamDiscordBot.singletons;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.ratelimit.RateLimit;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
@@ -14,6 +15,7 @@ import pro.beam.api.resource.BeamUser;
 import pro.beam.api.resource.channel.BeamChannel;
 import pro.beam.api.resource.constellation.BeamConstellation;
 import pro.beam.api.response.users.UserFollowsResponse;
+import pro.beam.api.services.impl.ChannelsService;
 import pro.beam.api.services.impl.UsersService;
 
 public abstract class BeamManager {
@@ -21,7 +23,7 @@ public abstract class BeamManager {
 	private static BeamAPI				beam;
 	private static BeamConstellation	constellation;
 
-	private static RateLimit			userReadLimit;
+	private static RateLimit			userReadLimit, channelReadLimit;
 
 	public static BeamAPI getBeam() {
 		if (null == beam) {
@@ -49,6 +51,14 @@ public abstract class BeamManager {
 		return userReadLimit;
 	}
 
+	private static RateLimit getChannelReadLimit() {
+		if (null == channelReadLimit) {
+			channelReadLimit = new RateLimit(1000, 300);
+		}
+
+		return channelReadLimit;
+	}
+
 	public static BeamUser getUser(int id) throws InterruptedException, ExecutionException {
 		return getBeam().use(UsersService.class).findOne(id).get();
 	}
@@ -73,11 +83,18 @@ public abstract class BeamManager {
 		return getTeamMembers(getTeam(id));
 	}
 
-	public static List<BeamTeamUser> getTeamMembers(BeamTeam team) throws InterruptedException, ExecutionException {
-		TeamUserSearchResponse teamMembers = new TeamUserSearchResponse();
+	public static List<BeamTeamUser> getTeamMembers(BeamTeam team) {
+		TeamUserSearchResponse teamMembers = new TeamUserSearchResponse();		
 		int page = 0;
 
-		while (teamMembers.addAll(getBeam().use(TeamsService.class).teamMembersOf(team, page++, 50).get()));
+		try {
+			while (teamMembers.addAll(getBeam().use(TeamsService.class).teamMembersOf(team, page++, 50).get()));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Send a log message to the log channel
+			e.printStackTrace();
+		}
 
 		return teamMembers;
 	}
@@ -99,5 +116,41 @@ public abstract class BeamManager {
 				&& following.addAll(getBeam().use(UsersService.class).following(user, page++, 50).get()));
 
 		return following;
+	}
+
+	public static BeamChannel getChannel(int id) throws InterruptedException, ExecutionException {
+		BeamChannel channel = null;
+
+		for (int i = 0; channel == null && i < 100; ++i) {
+			if (getChannelReadLimit().isNotLimited()) {
+				channel = getBeam().use(ChannelsService.class).findOne(id).get();
+			} else {
+				break;
+			}
+
+			if (channel == null) {
+				TimeUnit.SECONDS.sleep(5);
+			}
+		}
+
+		return channel;
+	}
+
+	public static BeamChannel getChannel(String name) throws InterruptedException, ExecutionException {
+		BeamChannel channel = null;
+
+		for (int i = 0; channel == null && i < 100; ++i) {
+			if (getChannelReadLimit().isNotLimited()) {
+				channel = getBeam().use(ChannelsService.class).findOneByToken(name).get();
+			} else {
+				break;
+			}
+
+			if (channel == null) {
+				TimeUnit.SECONDS.sleep(5);
+			}
+		}
+
+		return channel;
 	}
 }

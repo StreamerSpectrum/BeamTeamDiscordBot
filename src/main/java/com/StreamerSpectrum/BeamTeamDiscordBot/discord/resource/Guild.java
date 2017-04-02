@@ -1,16 +1,14 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource;
 
-import java.util.Map;
-
-import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
-import com.StreamerSpectrum.BeamTeamDiscordBot.discord.tracker.TeamTracker;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.constellation.Constellation;;
 
 public class Guild {
 
-	private final long	id;
+	private final long		id;
 
-	private TeamTracker	teamTracker;
-	private Options		options;
+	private Tracker			Tracker;
+	private Options			options;
+	private Constellation	constellation;
 
 	public Guild(long id) {
 		this.id = id;
@@ -20,19 +18,19 @@ public class Guild {
 		return id;
 	}
 
-	private TeamTracker getTeamTracker() {
-		if (null == teamTracker) {
-			teamTracker = new TeamTracker();
+	public Tracker getTracker() {
+		if (null == Tracker) {
+			Tracker = new Tracker(this);
 
 			// TODO: load stored teams from DB
 		}
 
-		return teamTracker;
+		return Tracker;
 	}
 
-	private Options getOptions() {
+	public Options getOptions() {
 		if (null == options) {
-			options = new Options();
+			options = new Options(this);
 
 			// TODO: load stored options from DB
 		}
@@ -40,16 +38,15 @@ public class Guild {
 		return options;
 	}
 
-	public Map<Integer, BeamTeam> getTeams() {
-		return getTeamTracker().getTeams();
-	}
+	public Constellation getConstellation() {
+		if (null == constellation) {
+			constellation = new Constellation(this);
 
-	public boolean addTeam(BeamTeam team) {
-		return getTeamTracker().add(team);
-	}
+			// TODO: subscribe to team members and stuff if certain options are
+			// set
+		}
 
-	public boolean removeTeam(BeamTeam team) {
-		return getTeamTracker().removeTeam(team) != null;
+		return constellation;
 	}
 
 }

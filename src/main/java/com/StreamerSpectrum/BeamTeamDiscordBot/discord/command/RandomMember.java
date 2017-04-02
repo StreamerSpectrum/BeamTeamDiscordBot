@@ -2,8 +2,6 @@ package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
 
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
@@ -26,16 +24,10 @@ public class RandomMember extends Command {
 			BeamTeam team = CommandHelper.getTeam(event, event.getArgs());
 
 			if (null != team) {
-				try {
-					List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
-					BeamTeamUser member = teamMembers.get(new Random().nextInt(teamMembers.size()));
+				List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
+				BeamTeamUser member = teamMembers.get(new Random().nextInt(teamMembers.size()));
 
-					CommandHelper.sendTeamUserEmbed(event, member);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					CommandHelper.sendMessage(event, "Cannot find team members for %s!", team.name);
-				}
+				CommandHelper.sendTeamUserEmbed(event, member);
 			}
 		} else {
 			CommandHelper.sendMessage(event, "Missing arguments from command!");

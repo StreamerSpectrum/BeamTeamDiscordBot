@@ -1,8 +1,10 @@
-package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
+package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.Guild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
 
 import me.jagrosh.jdautilities.commandclient.Command;
@@ -22,12 +24,13 @@ public class TeamAdd extends Command {
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
 			String args[] = event.getArgs().split(" ");
+			Guild guild = GuildManager.getGuild(event.getGuild().getId());
 
 			for (String teamArg : args) {
 				BeamTeam team = CommandHelper.getTeam(event, teamArg);
 
 				if (null != team) {
-					if (GuildManager.getGuild(event.getGuild().getId()).addTeam(team)) {
+					if (guild.getTracker().addTeam(team)) {
 						CommandHelper.sendMessage(event,
 								String.format("%s has been added to the team tracker.", team.name));
 					} else {
