@@ -2,13 +2,13 @@ package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.stream;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
 
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
 import net.dv8tion.jda.core.Permission;
-import pro.beam.api.resource.channel.BeamChannel;
 
 public class StreamRemove extends Command {
 
@@ -25,7 +25,7 @@ public class StreamRemove extends Command {
 			String args[] = event.getArgs().split(" ");
 
 			for (String channelArg : args) {
-				BeamChannel channel = CommandHelper.getChannel(event, channelArg);
+				BTBBeamChannel channel = CommandHelper.getChannel(event, channelArg);
 
 				if (null != channel) {
 					if (GuildManager.getGuild(event.getGuild().getId()).getTracker().removeChannel(channel)) {

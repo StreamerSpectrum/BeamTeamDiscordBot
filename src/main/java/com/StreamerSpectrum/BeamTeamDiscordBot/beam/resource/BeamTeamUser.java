@@ -5,8 +5,6 @@ import java.util.Date;
 
 import com.google.gson.annotations.SerializedName;
 
-import pro.beam.api.resource.BeamUser;
-
 @SuppressWarnings("serial")
 public class BeamTeamUser implements Serializable {
 	public Integer			level;
@@ -81,6 +79,6 @@ public class BeamTeamUser implements Serializable {
 	@Override
 	public boolean equals(Object obj) {
 		return (obj instanceof BeamTeamUser && ((BeamTeamUser) obj).id == this.id)
-				|| (obj instanceof BeamUser && ((BeamUser) obj).id == this.id);
+				|| (obj instanceof BTBBeamUser && ((BTBBeamUser) obj).id == this.id);
 	}
 }

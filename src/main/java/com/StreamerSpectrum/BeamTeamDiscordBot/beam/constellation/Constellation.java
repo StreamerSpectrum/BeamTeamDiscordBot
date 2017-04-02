@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.Guild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
@@ -17,8 +18,8 @@ import com.google.gson.JsonObject;
 
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.MessageEmbed;
-import pro.beam.api.resource.channel.BeamChannel;
 import pro.beam.api.resource.constellation.BeamConstellation;
+import pro.beam.api.resource.constellation.events.EventHandler;
 import pro.beam.api.resource.constellation.events.LiveEvent;
 import pro.beam.api.resource.constellation.methods.LiveSubscribeMethod;
 import pro.beam.api.resource.constellation.methods.LiveUnsubscribeMethod;
@@ -26,7 +27,6 @@ import pro.beam.api.resource.constellation.methods.data.LiveRequestData;
 import pro.beam.api.resource.constellation.replies.LiveRequestReply;
 import pro.beam.api.resource.constellation.replies.ReplyHandler;
 import pro.beam.api.resource.constellation.ws.BeamConstellationConnectable;
-import pro.beam.api.resource.constellation.events.EventHandler;
 
 public class Constellation {
 
@@ -83,7 +83,7 @@ public class Constellation {
 					JsonObject payload = event.data.payload;
 
 					if (payload.has("online")) {
-						BeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
+						BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
 
 						if (null != channel) {
 							System.out.println(String.format("%s's stream is %s", channel.user.username, payload.get("online").getAsBoolean() ? "live" : "offline"));

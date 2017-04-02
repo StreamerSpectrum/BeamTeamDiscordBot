@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
@@ -20,7 +21,6 @@ import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.exceptions.PermissionException;
-import pro.beam.api.resource.channel.BeamChannel;
 
 public abstract class CommandHelper {
 	public static final Color	COLOR			= new Color(76, 144, 243);
@@ -49,8 +49,8 @@ public abstract class CommandHelper {
 		return team;
 	}
 
-	public static BeamChannel getChannel(CommandEvent event, String nameOrID) {
-		BeamChannel channel = null;
+	public static BTBBeamChannel getChannel(CommandEvent event, String nameOrID) {
+		BTBBeamChannel channel = null;
 
 		try {
 			int id = Integer.parseInt(nameOrID);

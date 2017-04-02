@@ -5,18 +5,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.ratelimit.RateLimit;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.response.BTBUserFollowsResponse;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.response.TeamUserSearchResponse;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.services.BTBChannelsService;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.services.BTBUsersService;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.services.TeamsService;
 
 import pro.beam.api.BeamAPI;
-import pro.beam.api.resource.BeamUser;
-import pro.beam.api.resource.channel.BeamChannel;
 import pro.beam.api.resource.constellation.BeamConstellation;
-import pro.beam.api.response.users.UserFollowsResponse;
-import pro.beam.api.services.impl.ChannelsService;
-import pro.beam.api.services.impl.UsersService;
 
 public abstract class BeamManager {
 
@@ -30,6 +30,8 @@ public abstract class BeamManager {
 			beam = new BeamAPI();
 
 			beam.register(new TeamsService(beam));
+			beam.register(new BTBChannelsService(beam));
+			beam.register(new BTBUsersService(beam));
 		}
 
 		return beam;
@@ -59,12 +61,12 @@ public abstract class BeamManager {
 		return channelReadLimit;
 	}
 
-	public static BeamUser getUser(int id) throws InterruptedException, ExecutionException {
-		return getBeam().use(UsersService.class).findOne(id).get();
+	public static BTBBeamUser getUser(int id) throws InterruptedException, ExecutionException {
+		return getBeam().use(BTBUsersService.class).findOne(id).get();
 	}
 
-	public static BeamUser getUser(String name) throws InterruptedException, ExecutionException {
-		return getBeam().use(UsersService.class).search(name).get().get(0);
+	public static BTBBeamUser getUser(String name) throws InterruptedException, ExecutionException {
+		return getBeam().use(BTBUsersService.class).search(name).get().get(0);
 	}
 
 	public static BeamTeam getTeam(String team) throws InterruptedException, ExecutionException {
@@ -84,7 +86,7 @@ public abstract class BeamManager {
 	}
 
 	public static List<BeamTeamUser> getTeamMembers(BeamTeam team) {
-		TeamUserSearchResponse teamMembers = new TeamUserSearchResponse();		
+		TeamUserSearchResponse teamMembers = new TeamUserSearchResponse();
 		int page = 0;
 
 		try {
@@ -99,31 +101,31 @@ public abstract class BeamManager {
 		return teamMembers;
 	}
 
-	public static List<BeamChannel> getFollowing(int id) throws InterruptedException, ExecutionException {
+	public static List<BTBBeamChannel> getFollowing(int id) throws InterruptedException, ExecutionException {
 		return getFollowing(getUser(id));
 	}
 
-	public static List<BeamChannel> getFollowing(BeamTeamUser user) throws InterruptedException, ExecutionException {
+	public static List<BTBBeamChannel> getFollowing(BeamTeamUser user) throws InterruptedException, ExecutionException {
 		return getFollowing(getUser(user.id));
 	}
 
-	public static List<BeamChannel> getFollowing(BeamUser user) throws InterruptedException, ExecutionException {
-		UserFollowsResponse following = new UserFollowsResponse();
+	public static List<BTBBeamChannel> getFollowing(BTBBeamUser user) throws InterruptedException, ExecutionException {
+		BTBUserFollowsResponse following = new BTBUserFollowsResponse();
 
 		int page = 0;
 
 		while (getUserReadLimit().isNotLimited()
-				&& following.addAll(getBeam().use(UsersService.class).following(user, page++, 50).get()));
+				&& following.addAll(getBeam().use(BTBUsersService.class).following(user, page++, 50).get()));
 
 		return following;
 	}
 
-	public static BeamChannel getChannel(int id) throws InterruptedException, ExecutionException {
-		BeamChannel channel = null;
+	public static BTBBeamChannel getChannel(int id) throws InterruptedException, ExecutionException {
+		BTBBeamChannel channel = null;
 
 		for (int i = 0; channel == null && i < 100; ++i) {
 			if (getChannelReadLimit().isNotLimited()) {
-				channel = getBeam().use(ChannelsService.class).findOne(id).get();
+				channel = getBeam().use(BTBChannelsService.class).findOne(id).get();
 			} else {
 				break;
 			}
@@ -136,12 +138,12 @@ public abstract class BeamManager {
 		return channel;
 	}
 
-	public static BeamChannel getChannel(String name) throws InterruptedException, ExecutionException {
-		BeamChannel channel = null;
+	public static BTBBeamChannel getChannel(String name) throws InterruptedException, ExecutionException {
+		BTBBeamChannel channel = null;
 
 		for (int i = 0; channel == null && i < 100; ++i) {
 			if (getChannelReadLimit().isNotLimited()) {
-				channel = getBeam().use(ChannelsService.class).findOneByToken(name).get();
+				channel = getBeam().use(BTBChannelsService.class).findOneByToken(name).get();
 			} else {
 				break;
 			}

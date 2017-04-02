@@ -4,11 +4,10 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
-
-import pro.beam.api.resource.channel.BeamChannel;
 
 public class Options {
 
@@ -43,7 +42,7 @@ public class Options {
 			}
 		}
 
-		for (BeamChannel channel : owner.getTracker().getChannels().values()) {
+		for (BTBBeamChannel channel : owner.getTracker().getChannels().values()) {
 			owner.getConstellation().subscribeToChannel(channel.id);
 		}
 	}
@@ -57,7 +56,7 @@ public class Options {
 			}
 		}
 
-		for (BeamChannel channel : owner.getTracker().getChannels().values()) {
+		for (BTBBeamChannel channel : owner.getTracker().getChannels().values()) {
 			owner.getConstellation().unsubscribeFromChannel(channel.id);
 		}
 	}

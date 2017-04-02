@@ -6,18 +6,17 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
-
-import pro.beam.api.resource.channel.BeamChannel;
 
 public class Tracker {
 
 	private final Guild					owner;
 
 	private Map<Integer, BeamTeam>		teams;
-	private Map<Integer, BeamChannel>	channels;
+	private Map<Integer, BTBBeamChannel>	channels;
 
 	public Tracker(Guild owner) {
 		this.owner = owner;
@@ -31,9 +30,9 @@ public class Tracker {
 		return teams;
 	}
 
-	public Map<Integer, BeamChannel> getChannels() {
+	public Map<Integer, BTBBeamChannel> getChannels() {
 		if (null == channels) {
-			channels = new HashMap<Integer, BeamChannel>();
+			channels = new HashMap<Integer, BTBBeamChannel>();
 		}
 
 		return channels;
@@ -69,7 +68,7 @@ public class Tracker {
 		return removed;
 	}
 
-	public boolean addChannel(BeamChannel channel) {
+	public boolean addChannel(BTBBeamChannel channel) {
 		boolean added = !hasChannel(channel) && getChannels().put(channel.id, channel) == null;
 
 		if (added && StringUtils.isNotBlank(owner.getOptions().getGoLiveChannelID())) {
@@ -79,11 +78,11 @@ public class Tracker {
 		return added;
 	}
 
-	public boolean hasChannel(BeamChannel channel) {
+	public boolean hasChannel(BTBBeamChannel channel) {
 		return getChannels().containsKey(channel.id);
 	}
 
-	public boolean removeChannel(BeamChannel channel) {
+	public boolean removeChannel(BTBBeamChannel channel) {
 		boolean removed = getChannels().remove(channel.id) != null;
 
 		if (removed) {

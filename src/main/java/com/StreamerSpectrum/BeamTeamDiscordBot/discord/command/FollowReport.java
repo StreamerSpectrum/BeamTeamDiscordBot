@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.StringUtils;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
-import pro.beam.api.resource.BeamUser;
-import pro.beam.api.resource.channel.BeamChannel;
 
 public class FollowReport extends Command {
 
@@ -40,15 +40,15 @@ public class FollowReport extends Command {
 						StringBuilder notFollowingList = new StringBuilder();
 						int followingCount = 0, notFollowingCount = 0;
 
-						BeamUser user = BeamManager.getUser(userArg);
+						BTBBeamUser user = BeamManager.getUser(userArg);
 
-						List<BeamChannel> userFollows = BeamManager.getFollowing(user);
+						List<BTBBeamChannel> userFollows = BeamManager.getFollowing(user);
 
 						for (BeamTeamUser member : teamMembers) {
 							if (!member.equals(user)) {
 								boolean isNotFollowingMember = true;
 
-								for (BeamChannel followee : userFollows) {
+								for (BTBBeamChannel followee : userFollows) {
 									if (member.channel.id == followee.id) {
 										followingList.append(String.format("[%s](https://beam.pro/%s)\n",
 												member.username, member.username));
