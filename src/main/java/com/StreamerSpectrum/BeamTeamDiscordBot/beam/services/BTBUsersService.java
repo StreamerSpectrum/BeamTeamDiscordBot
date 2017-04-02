@@ -29,8 +29,12 @@ public class BTBUsersService extends AbstractHTTPService {
 		}
 	}
 
-	public ListenableFuture<BTBUserFollowsResponse> following(BTBBeamUser user, int page, int limit) {
-		return this.get(user.id + "/follows", BTBUserFollowsResponse.class, BeamHttpClient.getArgumentsBuilder()
+	public ListenableFuture<BTBUserFollowsResponse> following(int id, int page, int limit) {
+		return this.get(id + "/follows", BTBUserFollowsResponse.class, BeamHttpClient.getArgumentsBuilder()
 				.put("page", Math.max(0, page)).put("limit", Math.min(limit, 50)).build());
+	}
+	
+	public ListenableFuture<TeamMembershipExpandedSearchResponse> teams(int id) {
+		return this.get(id + "/teams", TeamMembershipExpandedSearchResponse.class);
 	}
 }

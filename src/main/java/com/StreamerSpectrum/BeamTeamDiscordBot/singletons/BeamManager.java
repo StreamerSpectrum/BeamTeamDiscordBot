@@ -9,6 +9,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.TeamMembershipExpanded;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.response.BTBUserFollowsResponse;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.response.TeamUserSearchResponse;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.services.BTBChannelsService;
@@ -61,8 +62,19 @@ public abstract class BeamManager {
 		return channelReadLimit;
 	}
 
-	public static BTBBeamUser getUser(int id) throws InterruptedException, ExecutionException {
-		return getBeam().use(BTBUsersService.class).findOne(id).get();
+	public static BTBBeamUser getUser(int id) {
+		BTBBeamUser user = null;
+
+		try {
+			user = getBeam().use(BTBUsersService.class).findOne(id).get();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO: Log error to log channel
+			e.printStackTrace();
+		}
+
+		return user;
 	}
 
 	public static BTBBeamUser getUser(String name) throws InterruptedException, ExecutionException {
@@ -92,6 +104,7 @@ public abstract class BeamManager {
 		try {
 			while (teamMembers.addAll(getBeam().use(TeamsService.class).teamMembersOf(team, page++, 50).get()));
 		} catch (InterruptedException e) {
+			// TODO Send a log message to the log channel
 			e.printStackTrace();
 		} catch (ExecutionException e) {
 			// TODO Send a log message to the log channel
@@ -115,7 +128,7 @@ public abstract class BeamManager {
 		int page = 0;
 
 		while (getUserReadLimit().isNotLimited()
-				&& following.addAll(getBeam().use(BTBUsersService.class).following(user, page++, 50).get()));
+				&& following.addAll(getBeam().use(BTBUsersService.class).following(user.id, page++, 50).get()));
 
 		return following;
 	}
@@ -154,5 +167,25 @@ public abstract class BeamManager {
 		}
 
 		return channel;
+	}
+	
+	public static List<TeamMembershipExpanded> getTeams(BTBBeamUser user) {
+		return getTeams(user.id);
+	}
+	
+	public static List<TeamMembershipExpanded> getTeams(int id) {
+		List<TeamMembershipExpanded> teams = null;
+		
+		try {
+			teams = getBeam().use(BTBUsersService.class).teams(id).get();
+		} catch (InterruptedException e) {
+			// TODO Send a log message to the log channel
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Send a log message to the log channel
+			e.printStackTrace();
+		}
+		
+		return teams;
 	}
 }

@@ -55,22 +55,6 @@ public class BeamTeamUser implements Serializable {
 		public Date		updatedAt;
 	}
 
-	public class TeamMembership implements Serializable {
-		public Integer	teamId;
-		public Integer	userId;
-		public boolean	accepted;
-		public Date		createdAt;
-		public Date		updatedAt;
-	}
-
-	public class Social implements Serializable {
-		public String	facebook;
-		public String	twitter;
-		public String	youtube;
-		public String	discord;
-		public String	player;
-	}
-
 	@Override
 	public int hashCode() {
 		return id.hashCode();
