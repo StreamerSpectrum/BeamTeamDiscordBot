@@ -92,14 +92,13 @@ public class Constellation {
 								MessageEmbed embed = new EmbedBuilder()
 										.setTitle(String.format("%s is now live!", channel.user.username),
 												String.format("https://beam.pro/%s", channel.user.username))
-										.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?w=64&h=64",
-												channel.user.id))
+										.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?_=%d", channel.user.id, new Random().nextInt()))
 										.setDescription(StringUtils.isBlank(channel.user.bio) ? "No bio" : channel.user.bio)
 										.addField(channel.name, channel.type.name, false)
 										.addField("Followers", Integer.toString(channel.numFollowers), true)
 										.addField("Views", Integer.toString(channel.viewersTotal), true)
 										.addField("Rating", channel.audience.toString(), true)
-										.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_%d", channel.id, new Random().nextInt()))
+										.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_=%d", channel.id, new Random().nextInt()))
 										.setFooter("Beam.pro", CommandHelper.BEAM_LOGO_URL).setTimestamp(Instant.now())
 										.setColor(CommandHelper.COLOR).build();
 	

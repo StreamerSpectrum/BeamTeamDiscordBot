@@ -113,7 +113,7 @@ public abstract class CommandHelper {
 		try {
 			sendMessage(event,
 					new EmbedBuilder().setTitle(member.username, String.format("https://beam.pro/%s", member.username))
-							.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?w=64&h=64", member.id))
+							.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?_=%d", member.id, new Random().nextInt()))
 							.setDescription(StringUtils.isBlank(member.bio) ? "No bio" : member.bio)
 							.addField("Followers", Integer.toString(member.channel.numFollowers), true)
 							.addField("Views", Integer.toString(member.channel.viewersTotal), true)
@@ -121,7 +121,7 @@ public abstract class CommandHelper {
 							.addField("Primary Team", BeamManager.getTeam(member.primaryTeam).name, true)
 							.addField("Joined Beam", member.createdAt.toString(), true)
 							.addField("Member Since", member.teamMembership.createdAt.toString(), true)
-							.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_%d",
+							.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_=%d",
 									member.channel.id, new Random().nextInt()))
 							.setFooter("Beam.pro", BEAM_LOGO_URL).setTimestamp(Instant.now()).setColor(COLOR).build());
 		} catch (InterruptedException e) {
