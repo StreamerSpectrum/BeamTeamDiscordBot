@@ -15,6 +15,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;;
 public class Guild {
 
 	private final long						id;
+	private final int						shardID;
 
 	private Constellation					constellation;
 
@@ -23,13 +24,17 @@ public class Guild {
 	private Map<Integer, BeamTeam>			teams;
 	private Map<Integer, BTBBeamChannel>	channels;
 
+	public Guild(long id, int shardID) {
 		this.id = id;
+		this.shardID = shardID;
 	}
 
 	public long getID() {
 		return id;
 	}
 
+	public int getShardID() {
+		return shardID;
 	}
 
 	public Constellation getConstellation() {
