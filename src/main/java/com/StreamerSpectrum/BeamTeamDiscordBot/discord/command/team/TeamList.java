@@ -22,8 +22,7 @@ public class TeamList extends Command {
 	@Override
 	protected void execute(CommandEvent event) {
 
-		List<BeamTeam> teams = new ArrayList<BeamTeam>(
-				GuildManager.getGuild(event.getGuild().getId()).getTracker().getTeams().values());
+		List<BeamTeam> teams = new ArrayList<BeamTeam>(GuildManager.getGuild(event.getGuild()).getTeams().values());
 
 		if (teams.size() > 0) {
 			StringBuilder teamsSB = new StringBuilder();

@@ -27,7 +27,7 @@ public class TeamRemove extends Command {
 				BeamTeam team = CommandHelper.getTeam(event, teamArg);
 
 				if (null != team) {
-					if (GuildManager.getGuild(event.getGuild().getId()).getTracker().removeTeam(team)) {
+					if (GuildManager.getGuild(event.getGuild()).removeTeam(team)) {
 						CommandHelper.sendMessage(event,
 								String.format("%s has been removed from the team tracker.", team.name));
 					} else {

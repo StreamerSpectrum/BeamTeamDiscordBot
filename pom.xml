@@ -39,6 +39,11 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.5.3</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.5</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -75,7 +80,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>com.StreamerSpectrum.BeamTeamDiscordBot.BeamTeamDiscordBotMain</mainClass>
+							<mainClass>com.StreamerSpectrum.BeamTeamDiscordBot.BTBMain</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

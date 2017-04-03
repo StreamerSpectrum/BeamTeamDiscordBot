@@ -28,12 +28,12 @@ public class StreamRemove extends Command {
 				BTBBeamChannel channel = CommandHelper.getChannel(event, channelArg);
 
 				if (null != channel) {
-					if (GuildManager.getGuild(event.getGuild().getId()).getTracker().removeChannel(channel)) {
-						CommandHelper.sendMessage(event,
-								String.format("%s's channel has been removed from the channel tracker.", channel.user.username));
+					if (GuildManager.getGuild(event.getGuild()).removeChannel(channel)) {
+						CommandHelper.sendMessage(event, String.format(
+								"%s's channel has been removed from the channel tracker.", channel.user.username));
 					} else {
-						CommandHelper.sendMessage(event,
-								String.format("%s's channel was not found in the list of tracked channels.", channel.user.username));
+						CommandHelper.sendMessage(event, String.format(
+								"%s's channel was not found in the list of tracked channels.", channel.user.username));
 					}
 				}
 			}

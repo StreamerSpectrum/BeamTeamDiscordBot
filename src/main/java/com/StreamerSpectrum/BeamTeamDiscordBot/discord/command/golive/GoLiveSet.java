@@ -7,13 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.Guild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
-import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
-
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public class GoLiveSet extends Command {
 
@@ -30,12 +27,12 @@ public class GoLiveSet extends Command {
 			String arg = event.getArgs().trim();
 
 			try {
-				List<TextChannel> textChannels = JDAManager.getJDA().getTextChannelsByName(arg, true);
+				List<TextChannel> textChannels = event.getJDA().getTextChannelsByName(arg, true);
 
 				if (!textChannels.isEmpty()) {
-					Guild guild = GuildManager.getGuild(event.getGuild().getId());
+					Guild guild = GuildManager.getGuild(event.getGuild());
 
-					guild.getOptions().setGoLiveChannelID(textChannels.get(0).getId());
+					guild.setGoLiveChannelID(textChannels.get(0).getId());
 
 					CommandHelper.sendMessage(event, "Go-live channel has been set to %s.", arg);
 				} else {
@@ -44,8 +41,6 @@ public class GoLiveSet extends Command {
 							arg);
 				}
 			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (RateLimitedException e) {
 				e.printStackTrace();
 			}
 		} else {

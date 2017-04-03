@@ -24,18 +24,18 @@ public class StreamAdd extends Command {
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
 			String args[] = event.getArgs().split(" ");
-			Guild guild = GuildManager.getGuild(event.getGuild().getId());
+			Guild guild = GuildManager.getGuild(event.getGuild());
 
 			for (String channelArg : args) {
 				BTBBeamChannel channel = CommandHelper.getChannel(event, channelArg);
 
 				if (null != channel) {
-					if (guild.getTracker().addChannel(channel)) {
+					if (guild.addChannel(channel)) {
 						CommandHelper.sendMessage(event,
 								String.format("%s's channel has been added to the tracker.", channel.user.username));
 					} else {
-						CommandHelper.sendMessage(event,
-								String.format("%s's channel is already in the list of tracked channels.", channel.user.username));
+						CommandHelper.sendMessage(event, String.format(
+								"%s's channel is already in the list of tracked channels.", channel.user.username));
 					}
 				}
 			}

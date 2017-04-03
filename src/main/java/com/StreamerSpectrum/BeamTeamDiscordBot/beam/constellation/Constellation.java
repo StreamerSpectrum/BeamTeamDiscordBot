@@ -13,6 +13,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.Guild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
 import com.google.gson.JsonObject;
 
@@ -30,18 +31,18 @@ import pro.beam.api.resource.constellation.ws.BeamConstellationConnectable;
 
 public class Constellation {
 
-	private static final long				CONNECTION_CHECK_INTERVAL	= 15 * 60 * 1000;	// 15
+	private static final long					CONNECTION_CHECK_INTERVAL	= 15 * 60 * 1000;	// 15
 	// minutes
 
 	private final BeamConstellation				constellation;
 	private final BeamConstellationConnectable	connectable;
 
-	private final Guild						owner;
+	private final long							guildID;
 
-	private Timer							connectionCheckTimer;
+	private Timer								connectionCheckTimer;
 
-	public Constellation(Guild owner) {
-		this.owner = owner;
+	public Constellation(long guildID) {
+		this.guildID = guildID;
 
 		constellation = new BeamConstellation();
 		connectable = new BeamConstellationConnectable(BeamManager.getBeam(), constellation);
@@ -74,6 +75,10 @@ public class Constellation {
 		handleChannelLive();
 	}
 
+	private Guild getGuild() {
+		return GuildManager.getGuild(guildID);
+	}
+
 	private void handleChannelLive() {
 		connectable.on(LiveEvent.class, new EventHandler<LiveEvent>() {
 
@@ -86,28 +91,33 @@ public class Constellation {
 						BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
 
 						if (null != channel) {
-							System.out.println(String.format("%s's stream is %s", channel.user.username, payload.get("online").getAsBoolean() ? "live" : "offline"));
-							
+							System.out.println(String.format("%s's stream is %s", channel.user.username,
+									payload.get("online").getAsBoolean() ? "live" : "offline"));
+
 							if (payload.get("online").getAsBoolean()) {
 								MessageEmbed embed = new EmbedBuilder()
 										.setTitle(String.format("%s is now live!", channel.user.username),
 												String.format("https://beam.pro/%s", channel.user.username))
-										.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?_=%d", channel.user.id, new Random().nextInt()))
-										.setDescription(StringUtils.isBlank(channel.user.bio) ? "No bio" : channel.user.bio)
+										.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?_=%d",
+												channel.user.id, new Random().nextInt()))
+										.setDescription(
+												StringUtils.isBlank(channel.user.bio) ? "No bio" : channel.user.bio)
 										.addField(channel.name, channel.type.name, false)
 										.addField("Followers", Integer.toString(channel.numFollowers), true)
 										.addField("Views", Integer.toString(channel.viewersTotal), true)
 										.addField("Rating", channel.audience.toString(), true)
-										.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_=%d", channel.id, new Random().nextInt()))
+										.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_=%d",
+												channel.id, new Random().nextInt()))
 										.setFooter("Beam.pro", CommandHelper.BEAM_LOGO_URL).setTimestamp(Instant.now())
 										.setColor(CommandHelper.COLOR).build();
-	
-								JDAManager.sendMessage(owner.getOptions().getGoLiveChannelID(), embed);
+
+								JDAManager.sendMessage(getGuild().getGoLiveChannelID(), embed);
 							} else {
 								// TODO: delete message when user goes offline
 							}
 						} else {
-							System.out.println(String.format("Unable to retrieve channel info for channel id %d", getIDFromEvent(event.data.channel)));
+							System.out.println(String.format("Unable to retrieve channel info for channel id %d",
+									getIDFromEvent(event.data.channel)));
 						}
 					}
 				} catch (NumberFormatException e) {

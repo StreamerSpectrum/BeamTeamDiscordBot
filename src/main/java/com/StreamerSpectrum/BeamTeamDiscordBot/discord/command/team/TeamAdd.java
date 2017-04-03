@@ -24,13 +24,13 @@ public class TeamAdd extends Command {
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
 			String args[] = event.getArgs().split(" ");
-			Guild guild = GuildManager.getGuild(event.getGuild().getId());
+			Guild guild = GuildManager.getGuild(event.getGuild());
 
 			for (String teamArg : args) {
 				BeamTeam team = CommandHelper.getTeam(event, teamArg);
 
 				if (null != team) {
-					if (guild.getTracker().addTeam(team)) {
+					if (guild.addTeam(team)) {
 						CommandHelper.sendMessage(event,
 								String.format("%s has been added to the team tracker.", team.name));
 					} else {
