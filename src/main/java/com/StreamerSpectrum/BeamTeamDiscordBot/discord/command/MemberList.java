@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
 
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
@@ -23,10 +24,10 @@ public class MemberList extends Command {
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
 			memberListHelper(event, event.getArgs().split(" "));
-		} else if (!GuildManager.getGuild(event.getGuild()).getTeams().isEmpty()) {
+		} else if (!GuildManager.getGuild(event.getGuild()).getTrackedTeams().isEmpty()) {
 			List<String> args = new ArrayList<String>();
 			List<BeamTeam> trackedTeams = new ArrayList<BeamTeam>(
-					GuildManager.getGuild(event.getGuild()).getTeams().values());
+					GuildManager.getGuild(event.getGuild()).getTrackedTeams());
 
 			for (BeamTeam team : trackedTeams) {
 				args.add(team.token);
@@ -34,7 +35,7 @@ public class MemberList extends Command {
 
 			memberListHelper(event, args.toArray(new String[] {}));
 		} else {
-			CommandHelper.sendMessage(event, "Missing arguments from command!");
+			JDAManager.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 

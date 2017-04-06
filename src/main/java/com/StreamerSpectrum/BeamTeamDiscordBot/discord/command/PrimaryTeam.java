@@ -5,6 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
+
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
 
@@ -60,7 +62,7 @@ public class PrimaryTeam extends Command {
 				}
 			}
 		} else {
-			CommandHelper.sendMessage(event, "Missing arguments from command!");
+			JDAManager.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 

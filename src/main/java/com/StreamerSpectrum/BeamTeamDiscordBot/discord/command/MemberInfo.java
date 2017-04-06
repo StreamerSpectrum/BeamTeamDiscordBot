@@ -10,6 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
+
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
 
@@ -60,13 +62,14 @@ public class MemberInfo extends Command {
 								e.printStackTrace();
 							}
 						} else {
-							CommandHelper.sendMessage(event, "Unable to find information for user %s.", userArg);
+
+							JDAManager.sendMessage(event, "Unable to find information for user %s.", userArg);
 						}
 					}
 				}
 			}
 		} else {
-			CommandHelper.sendMessage(event, "Missing arguments from command!");
+			JDAManager.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 }

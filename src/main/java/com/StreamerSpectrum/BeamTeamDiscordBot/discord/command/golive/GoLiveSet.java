@@ -4,9 +4,10 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
-import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.Guild;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
+
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
 import net.dv8tion.jda.core.Permission;
@@ -18,7 +19,7 @@ public class GoLiveSet extends Command {
 		this.name = "goliveset";
 		this.help = "Sets the target channel as the announcement channel for when tracked team members go live.";
 		this.arguments = "channel";
-		this.userPermissions = new Permission[] { Permission.MANAGE_CHANNEL, Permission.MANAGE_ROLES };
+		this.userPermissions = new Permission[] { Permission.MANAGE_CHANNEL };
 	}
 
 	@Override
@@ -30,13 +31,13 @@ public class GoLiveSet extends Command {
 				List<TextChannel> textChannels = event.getJDA().getTextChannelsByName(arg, true);
 
 				if (!textChannels.isEmpty()) {
-					Guild guild = GuildManager.getGuild(event.getGuild());
+					BTBGuild guild = GuildManager.getGuild(event.getGuild());
 
 					guild.setGoLiveChannelID(textChannels.get(0).getId());
 
-					CommandHelper.sendMessage(event, "Go-live channel has been set to %s.", arg);
+					JDAManager.sendMessage(event, "Go-live channel has been set to %s.", arg);
 				} else {
-					CommandHelper.sendMessage(event,
+					JDAManager.sendMessage(event,
 							"I can't find the channel named %s. Please ensure it exists and that I have read & write priveleges for it.",
 							arg);
 				}
@@ -44,7 +45,7 @@ public class GoLiveSet extends Command {
 				e.printStackTrace();
 			}
 		} else {
-			CommandHelper.sendMessage(event, "Missing arguments from command!");
+			JDAManager.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 

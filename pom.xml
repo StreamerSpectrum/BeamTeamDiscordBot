@@ -44,6 +44,11 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.5</version>
 		</dependency>
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.16.1</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -67,6 +72,10 @@
 			<id>central</id>
 			<name>bintray</name>
 			<url>http://jcenter.bintray.com</url>
+		</repository>
+		<repository>
+			<id>tmate</id>
+			<url>http://maven.tmatesoft.com/content/repositories/releases</url>
 		</repository>
 	</repositories>
 

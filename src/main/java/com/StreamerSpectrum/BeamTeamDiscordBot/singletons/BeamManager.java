@@ -48,7 +48,7 @@ public abstract class BeamManager {
 
 	private static RateLimit getUserReadLimit() {
 		if (null == userReadLimit) {
-			userReadLimit = new RateLimit(500, 60);
+			userReadLimit = new RateLimit("user-read", 1, 15);
 		}
 
 		return userReadLimit;
@@ -56,7 +56,7 @@ public abstract class BeamManager {
 
 	private static RateLimit getChannelReadLimit() {
 		if (null == channelReadLimit) {
-			channelReadLimit = new RateLimit(1000, 300);
+			channelReadLimit = new RateLimit("channel-read", 1000, 300);
 		}
 
 		return channelReadLimit;
@@ -77,23 +77,59 @@ public abstract class BeamManager {
 		return user;
 	}
 
-	public static BTBBeamUser getUser(String name) throws InterruptedException, ExecutionException {
-		return getBeam().use(BTBUsersService.class).search(name).get().get(0);
+	public static BTBBeamUser getUser(String name) {
+		BTBBeamUser user = null;
+
+		try {
+			user = getBeam().use(BTBUsersService.class).search(name).get().get(0);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return user;
 	}
 
-	public static BeamTeam getTeam(String team) throws InterruptedException, ExecutionException {
-		return getBeam().use(TeamsService.class).findOne(team).get();
+	public static BeamTeam getTeam(String token) {
+		BeamTeam team = null;
+
+		try {
+			team = getBeam().use(TeamsService.class).findOne(token).get();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return team;
 	}
 
-	public static BeamTeam getTeam(int id) throws InterruptedException, ExecutionException {
-		return getBeam().use(TeamsService.class).findOne(id).get();
+	public static BeamTeam getTeam(int id) {
+		BeamTeam team = null;
+		
+		try {
+			team = getBeam().use(TeamsService.class).findOne(id).get();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return team;
 	}
 
-	public static List<BeamTeamUser> getTeamMembers(String team) throws InterruptedException, ExecutionException {
+	public static List<BeamTeamUser> getTeamMembers(String team) {
 		return getTeamMembers(getTeam(team));
 	}
 
-	public static List<BeamTeamUser> getTeamMembers(int id) throws InterruptedException, ExecutionException {
+	public static List<BeamTeamUser> getTeamMembers(int id) {
 		return getTeamMembers(getTeam(id));
 	}
 
@@ -114,68 +150,88 @@ public abstract class BeamManager {
 		return teamMembers;
 	}
 
-	public static List<BTBBeamChannel> getFollowing(int id) throws InterruptedException, ExecutionException {
+	public static List<BTBBeamChannel> getFollowing(int id) {
 		return getFollowing(getUser(id));
 	}
 
-	public static List<BTBBeamChannel> getFollowing(BeamTeamUser user) throws InterruptedException, ExecutionException {
+	public static List<BTBBeamChannel> getFollowing(BeamTeamUser user) {
 		return getFollowing(getUser(user.id));
 	}
 
-	public static List<BTBBeamChannel> getFollowing(BTBBeamUser user) throws InterruptedException, ExecutionException {
+	public static List<BTBBeamChannel> getFollowing(BTBBeamUser user) {
 		BTBUserFollowsResponse following = new BTBUserFollowsResponse();
 
-		int page = 0;
+		try {
+			int page = 0;
 
-		while (getUserReadLimit().isNotLimited()
-				&& following.addAll(getBeam().use(BTBUsersService.class).following(user.id, page++, 50).get()));
+			while (getUserReadLimit().isNotLimited()
+					&& following.addAll(getBeam().use(BTBUsersService.class).following(user.id, page++, 50).get()));
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		return following;
 	}
 
-	public static BTBBeamChannel getChannel(int id) throws InterruptedException, ExecutionException {
+	public static BTBBeamChannel getChannel(int id) {
 		BTBBeamChannel channel = null;
 
-		for (int i = 0; channel == null && i < 100; ++i) {
-			if (getChannelReadLimit().isNotLimited()) {
-				channel = getBeam().use(BTBChannelsService.class).findOne(id).get();
-			} else {
-				break;
-			}
+		try {
+			for (int retry = 0; channel == null && retry < 10; ++retry) {
+				if (getChannelReadLimit().isNotLimited()) {
+					channel = getBeam().use(BTBChannelsService.class).findOne(id).get();
+				}
 
-			if (channel == null) {
-				TimeUnit.SECONDS.sleep(5);
+				if (channel == null) {
+					TimeUnit.SECONDS.sleep(1);
+				}
 			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 		return channel;
 	}
 
-	public static BTBBeamChannel getChannel(String name) throws InterruptedException, ExecutionException {
+	public static BTBBeamChannel getChannel(String name) {
 		BTBBeamChannel channel = null;
 
-		for (int i = 0; channel == null && i < 100; ++i) {
-			if (getChannelReadLimit().isNotLimited()) {
-				channel = getBeam().use(BTBChannelsService.class).findOneByToken(name).get();
-			} else {
-				break;
-			}
+		try {
+			for (int retry = 0; channel == null && retry < 10; ++retry) {
+				if (getChannelReadLimit().isNotLimited()) {
+					channel = getBeam().use(BTBChannelsService.class).findOneByToken(name).get();
+				}
 
-			if (channel == null) {
-				TimeUnit.SECONDS.sleep(5);
+				if (channel == null) {
+					TimeUnit.SECONDS.sleep(1);
+				}
 			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 		return channel;
 	}
-	
+
 	public static List<TeamMembershipExpanded> getTeams(BTBBeamUser user) {
 		return getTeams(user.id);
 	}
-	
+
 	public static List<TeamMembershipExpanded> getTeams(int id) {
 		List<TeamMembershipExpanded> teams = null;
-		
+
 		try {
 			teams = getBeam().use(BTBUsersService.class).teams(id).get();
 		} catch (InterruptedException e) {
@@ -185,7 +241,7 @@ public abstract class BeamManager {
 			// TODO Send a log message to the log channel
 			e.printStackTrace();
 		}
-		
+
 		return teams;
 	}
 }

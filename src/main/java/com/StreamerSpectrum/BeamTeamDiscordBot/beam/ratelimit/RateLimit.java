@@ -4,30 +4,48 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class RateLimit {
-	private final int		REQUEST_COUNT;
-	private final int		TIME_INTERVAL;
-	private volatile int	curCount;
-	private Timer			timer;
+	private final int			REQUEST_COUNT;
+	private final int			TIME_INTERVAL;
+	private final String		NAME;
 
-	public RateLimit(int requestCount, int timeInterval) {
+	private final SyncObject	syncObject	= new SyncObject();
+
+	private Timer				timer		= new Timer();
+
+	private volatile int		curCount;
+
+	public RateLimit(String name, int requestCount, int timeInterval) {
+		NAME = name;
 		REQUEST_COUNT = requestCount;
 		TIME_INTERVAL = timeInterval;
 
 		curCount = 0;
-
-		timer = new Timer();
 
 		timer.scheduleAtFixedRate(new TimerTask() {
 
 			@Override
 			public void run() {
 				curCount = 0;
+				synchronized (syncObject) {
+					syncObject.notify();
+				}
 			}
 		}, TIME_INTERVAL * 1000, TIME_INTERVAL * 1000);
 	}
 
-	public boolean isNotLimited() {
+	public boolean isNotLimited() throws InterruptedException {
+		if (curCount >= REQUEST_COUNT) {
+			synchronized (syncObject) {
+				// TODO: notify log channel that we're waiting for the rate
+				// limit to chill
+				System.out.println(String.format("%s has reached its rate limit.", NAME));
+				syncObject.wait();
+			}
+		}
+
 		return curCount++ < REQUEST_COUNT;
 	}
 
 }
+
+class SyncObject {}

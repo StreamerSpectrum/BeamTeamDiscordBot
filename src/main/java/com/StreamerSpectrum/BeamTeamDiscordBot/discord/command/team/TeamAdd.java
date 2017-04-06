@@ -4,8 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
-import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.Guild;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
 
 import me.jagrosh.jdautilities.commandclient.Command;
 import me.jagrosh.jdautilities.commandclient.CommandEvent;
@@ -17,30 +18,30 @@ public class TeamAdd extends Command {
 		this.name = "teamadd";
 		this.help = "Takes in a space-separated list of one or more teams and adds them to this server's tracker.";
 		this.arguments = "namesOrIDs...";
-		this.userPermissions = new Permission[] { Permission.MANAGE_CHANNEL, Permission.MANAGE_ROLES };
+		this.userPermissions = new Permission[] { Permission.MANAGE_CHANNEL };
 	}
 
 	@Override
 	protected void execute(CommandEvent event) {
 		if (!StringUtils.isBlank(event.getArgs())) {
 			String args[] = event.getArgs().split(" ");
-			Guild guild = GuildManager.getGuild(event.getGuild());
+			BTBGuild guild = GuildManager.getGuild(event.getGuild());
 
 			for (String teamArg : args) {
 				BeamTeam team = CommandHelper.getTeam(event, teamArg);
 
 				if (null != team) {
 					if (guild.addTeam(team)) {
-						CommandHelper.sendMessage(event,
+						JDAManager.sendMessage(event,
 								String.format("%s has been added to the team tracker.", team.name));
 					} else {
-						CommandHelper.sendMessage(event,
+						JDAManager.sendMessage(event,
 								String.format("%s is already in the list of tracked teams.", team.name));
 					}
 				}
 			}
 		} else {
-			CommandHelper.sendMessage(event, "Missing arguments from command!");
+			JDAManager.sendMessage(event, "Missing arguments from command!");
 		}
 	}
 

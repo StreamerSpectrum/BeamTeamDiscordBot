@@ -1,5 +1,6 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
 import com.google.gson.annotations.SerializedName;
 import pro.beam.api.resource.channel.BeamResource;
 import pro.beam.api.resource.channel.CachedMessage;
@@ -7,6 +8,7 @@ import pro.beam.api.resource.channel.CachedMessage;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("serial")
@@ -44,7 +46,7 @@ public class BTBBeamChannel implements Serializable {
 	@Deprecated
 	@SerializedName("cache")
 	public ArrayDeque<CachedMessage>	messageCache;
-	public BTBBeamUser						user;
+	public BTBBeamUser					user;
 
 	public static class Type implements Serializable {
 		public int		id;
@@ -69,5 +71,16 @@ public class BTBBeamChannel implements Serializable {
 		FAMILY, @SerializedName("teen")
 		TEEN, @SerializedName("18+")
 		ADULT
+	}
+
+	public Map<String, Object> getDbValues() {
+		Map<String, Object> values = new HashMap<>();
+
+		values.put(Constants.CHANNELS_COL_ID, id);
+		values.put(Constants.CHANNELS_COL_NAME, user.username);
+		values.put(Constants.CHANNELS_COL_TOKEN, token);
+		values.put(Constants.CHANNELS_COL_USERID, user.id);
+
+		return values;
 	}
 }

@@ -2,6 +2,10 @@ package com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
 
 @SuppressWarnings("serial")
 public class BeamTeam implements Serializable {
@@ -25,5 +29,15 @@ public class BeamTeam implements Serializable {
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof BeamTeam && ((BeamTeam) obj).id == this.id;
+	}
+
+	public Map<String, Object> getDbValues() {
+		Map<String, Object> values = new HashMap<>();
+
+		values.put(Constants.TEAMS_COL_ID, id);
+		values.put(Constants.TEAMS_COL_NAME, name);
+		values.put(Constants.TEAMS_COL_TOKEN, token);
+
+		return values;
 	}
 }
