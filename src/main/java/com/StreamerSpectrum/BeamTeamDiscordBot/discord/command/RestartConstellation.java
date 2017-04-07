@@ -14,7 +14,7 @@ public class RestartConstellation extends Command {
 
 	@Override
 	protected void execute(CommandEvent event) {
-		ConstellationManager.restartConstellation(Long.parseLong(event.getGuild().getId()));
+		ConstellationManager.restartConstellation();
 	}
 
 }

@@ -73,6 +73,16 @@ public class BTBBeamChannel implements Serializable {
 		ADULT
 	}
 
+	@Override
+	public int hashCode() {
+		return new Integer(id).hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof BTBBeamChannel && ((BTBBeamChannel) obj).id == this.id;
+	}
+
 	public Map<String, Object> getDbValues() {
 		Map<String, Object> values = new HashMap<>();
 

@@ -1,47 +1,256 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.singletons;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
-import com.StreamerSpectrum.BeamTeamDiscordBot.beam.constellation.Constellation;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.TeamMembershipExpanded;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
+import com.google.gson.JsonObject;
+
+import pro.beam.api.resource.constellation.events.EventHandler;
+import pro.beam.api.resource.constellation.events.LiveEvent;
+import pro.beam.api.resource.constellation.methods.LiveSubscribeMethod;
+import pro.beam.api.resource.constellation.methods.LiveUnsubscribeMethod;
+import pro.beam.api.resource.constellation.methods.data.LiveRequestData;
+import pro.beam.api.resource.constellation.replies.LiveRequestReply;
+import pro.beam.api.resource.constellation.replies.ReplyHandler;
+import pro.beam.api.resource.constellation.ws.BeamConstellationConnectable;
 
 public abstract class ConstellationManager {
 
-	private static Map<Long, Constellation> constellationObjs;
+	// private static final long CONNECTION_CHECK_INTERVAL = 15 * 60 * 1000; //
+	// 15
+	// minutes
 
-	private static Map<Long, Constellation> getConstellationObjs() {
-		if (null == constellationObjs) {
-			constellationObjs = new HashMap<Long, Constellation>();
-		}
+	private static BeamConstellationConnectable connectable;
 
-		return constellationObjs;
-	}
+	// private static Timer connectionCheckTimer;
 
-	public static Constellation addConstellation(long guildID) {
-		if (!getConstellationObjs().containsKey(guildID)) {
-			getConstellationObjs().put(guildID, new Constellation(guildID));
-		}
-
-		return getConstellationObjs().get(guildID);
-	}
-
-	public static Constellation removeConstellation(long guildID) {
-		getConstellationObjs().get(guildID).disconnect();
-		return getConstellationObjs().remove(guildID);
-	}
-
-	public static Constellation getConstellation(long guildID) {
-		if (getConstellationObjs().get(guildID) == null) {
-			addConstellation(guildID);
-		}
-
-		return getConstellationObjs().get(guildID);
-	}
-	
-	public static void restartConstellation(long guildID) {
-		removeConstellation(guildID);
-		addConstellation(guildID);
+	public static void init() throws SQLException {
+		handleAnnouncements();
+		handleChannelUpdate();
+		handleMemberAccepted();
+		handleMemberInvited();
+		handleMemberRemoved();
+		handleOwnerChanged();
 		
-		GuildManager.getGuild(guildID).subscribeAllTracked();
+		subscribeToAnnouncements();
+		
+		List<BeamTeam> teams = DbManager.readAllTeams();
+		
+		for (BeamTeam team : teams) {
+			subscribeToTeam(team);
+		}
+		
+		List<BTBBeamChannel> channels = DbManager.readAllChannels();
+		
+		for (BTBBeamChannel channel : channels) {
+			subscribeToChannel(channel.id);
+		}
+	}
+
+	private static BeamConstellationConnectable getConnectable() {
+		if (null == connectable || (null != connectable && connectable.isClosed())) {
+			connectable = BeamManager.getConstellation().connectable(BeamManager.getBeam());
+
+			connectable.connect();
+		}
+
+		return connectable;
+	}
+
+	public static void restartConstellation() {
+		getConnectable().disconnect();
+
+		for (int i = 0; i < 5 && getConnectable().isClosed(); ++i) {
+			getConnectable().disconnect();
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static void handleAnnouncements() {
+		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+
+			@Override
+			public void onEvent(LiveEvent event) {
+				JsonObject payload = event.data.payload;
+			}
+
+		});
+	}
+
+	private static void handleChannelUpdate() {
+		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+
+			@Override
+			public void onEvent(LiveEvent event) {
+				try {
+					JsonObject payload = event.data.payload;
+
+					if (payload.has("online")) {
+						BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
+
+						if (null != channel) {
+							Set<BTBGuild> guilds = new HashSet<>();
+
+							try {
+								// Add all guilds that are tracking this
+								// channel's teams to the announce set
+								List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
+
+								for (TeamMembershipExpanded team : userTeams) {
+									guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true));
+								}
+
+								// Add all guilds that are tracking this channel
+								// to the announce set
+								guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
+								// TODO: Check if this channel/channel's user is
+								// following a channel in a guild's tracked
+								// follows
+								// (get
+								// all guilds in the db that are tracking anyone
+								// this channel/user is following)
+							} catch (SQLException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+
+							if (payload.get("online").getAsBoolean()) {
+								System.out.println(String.format("%s is now live!", channel.user.username));
+
+								for (BTBGuild guild : guilds) {
+									JDAManager.sendMessage(guild.getGoLiveChannelID(),
+											JDAManager.buildGoLiveEmbed(channel));
+								}
+							} else {
+								System.out.println(String.format("%s is now offline!", channel.user.username));
+								// TODO: delete message when user goes offline
+							}
+						} else {
+							System.out.println(String.format("Unable to retrieve channel info for channel id %d",
+									getIDFromEvent(event.data.channel)));
+						}
+					}
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		});
+	}
+
+	private static void handleMemberAccepted() {
+		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+
+			@Override
+			public void onEvent(LiveEvent event) {
+				JsonObject payload = event.data.payload;
+			}
+
+		});
+	}
+
+	private static void handleMemberInvited() {
+		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+
+			@Override
+			public void onEvent(LiveEvent event) {
+				JsonObject payload = event.data.payload;
+			}
+
+		});
+	}
+
+	private static void handleMemberRemoved() {
+		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+
+			@Override
+			public void onEvent(LiveEvent event) {
+				JsonObject payload = event.data.payload;
+			}
+
+		});
+	}
+
+	private static void handleOwnerChanged() {
+		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+
+			@Override
+			public void onEvent(LiveEvent event) {
+				JsonObject payload = event.data.payload;
+			}
+
+		});
+	}
+
+	public static void subscribeToAnnouncements() {
+		subscribeToEvent("announcement:announce");
+	}
+
+	public static void subscribeToChannel(int channelID) {
+		subscribeToEvent(String.format("channel:%d:update", channelID));
+	}
+
+	public static void subscribeToTeam(BeamTeam team) {
+		List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
+
+		for (BeamTeamUser member : teamMembers) {
+			subscribeToChannel(member.channel.id);
+		}
+
+		subscribeToEvent(String.format("team:%d:memberAccepted", team.id));
+		subscribeToEvent(String.format("team:%d:memberInvited", team.id));
+		subscribeToEvent(String.format("team:%d:memberRemoved", team.id));
+		subscribeToEvent(String.format("team:%d:ownerChanged", team.id));
+	}
+
+	private static void subscribeToEvent(String event) {
+		LiveSubscribeMethod lsm = new LiveSubscribeMethod();
+
+		lsm.params = new LiveRequestData();
+		lsm.params.events = new ArrayList<>();
+		lsm.params.events.add(event);
+
+		getConnectable().send(lsm, new ReplyHandler<LiveRequestReply>() {
+
+			@Override
+			public void onSuccess(LiveRequestReply result) {
+				System.out.println(String.format("Successfully subscribed to %s.", event));
+			}
+		});
+	}
+
+	private static void unsubscribeFromEvent(String event) {
+		LiveUnsubscribeMethod lum = new LiveUnsubscribeMethod();
+
+		lum.params = new LiveRequestData();
+		lum.params.events = new ArrayList<>();
+		lum.params.events.add(event);
+
+		getConnectable().send(lum, new ReplyHandler<LiveRequestReply>() {
+
+			@Override
+			public void onSuccess(LiveRequestReply result) {
+				System.out.println(String.format("Successfully unsubscribed from %s.", event));
+			}
+		});
+	}
+
+	private static int getIDFromEvent(String event) {
+		return Integer.parseInt(event.substring(event.indexOf(":") + 1, event.lastIndexOf(":")));
 	}
 }

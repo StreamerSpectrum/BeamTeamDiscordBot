@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 
 import net.dv8tion.jda.core.entities.Guild;
@@ -44,7 +43,7 @@ public abstract class GuildManager {
 
 	public static void addGuild(BTBGuild guild) {
 		try {
-			DbManager.create(Constants.TABLE_GUILDS, guild.getDbValues());
+			DbManager.createGuild(guild);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -57,7 +56,7 @@ public abstract class GuildManager {
 
 	public static void deleteGuild(long id) {
 		try {
-			DbManager.delete(Constants.TABLE_GUILDS, String.format("%s = %d", Constants.GUILDS_COL_ID, id));
+			DbManager.deleteGuild(id);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -68,13 +67,7 @@ public abstract class GuildManager {
 		BTBGuild guild = null;
 
 		try {
-			List<List<String>> values = DbManager.read(Constants.TABLE_GUILDS, null, null,
-					String.format("%s = %d", Constants.GUILDS_COL_ID, id));
-
-			if (!values.isEmpty()) {
-				guild = new BTBGuild(Long.parseLong(values.get(0).get(0)), GuildManager.getShardID(id),
-						values.get(0).get(1));
-			}
+			guild = DbManager.readGuild(id);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

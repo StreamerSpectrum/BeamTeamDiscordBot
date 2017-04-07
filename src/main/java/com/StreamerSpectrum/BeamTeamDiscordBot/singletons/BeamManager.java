@@ -1,5 +1,6 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.singletons;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -230,7 +231,7 @@ public abstract class BeamManager {
 	}
 
 	public static List<TeamMembershipExpanded> getTeams(int id) {
-		List<TeamMembershipExpanded> teams = null;
+		List<TeamMembershipExpanded> teams = new ArrayList<>();
 
 		try {
 			teams = getBeam().use(BTBUsersService.class).teams(id).get();
