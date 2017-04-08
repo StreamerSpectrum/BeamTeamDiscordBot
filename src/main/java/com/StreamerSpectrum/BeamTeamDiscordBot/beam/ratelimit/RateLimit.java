@@ -28,6 +28,7 @@ public class RateLimit {
 				curCount = 0;
 				synchronized (syncObject) {
 					syncObject.notify();
+					System.out.println(String.format("%s has reset its rate limit (%d/%d).", NAME, curCount, REQUEST_COUNT));
 				}
 			}
 		}, TIME_INTERVAL * 1000, TIME_INTERVAL * 1000);
