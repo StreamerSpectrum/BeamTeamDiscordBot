@@ -25,21 +25,10 @@ import pro.beam.api.resource.constellation.ws.BeamConstellationConnectable;
 
 public abstract class ConstellationManager {
 
-	// private static final long CONNECTION_CHECK_INTERVAL = 15 * 60 * 1000; //
-	// 15
-	// minutes
-
 	private static BeamConstellationConnectable connectable;
 
-	// private static Timer connectionCheckTimer;
-
-	public static void init() throws SQLException {
-		handleAnnouncements();
-		handleChannelUpdate();
-		handleMemberAccepted();
-		handleMemberInvited();
-		handleMemberRemoved();
-		handleOwnerChanged();
+	private static void init() throws SQLException {
+		handleEvents();
 
 		subscribeToAnnouncements();
 
@@ -54,13 +43,23 @@ public abstract class ConstellationManager {
 		for (BTBBeamChannel channel : channels) {
 			subscribeToChannel(channel.id);
 		}
+
+		// TODO: subscribe to tracked followers
+		// TODO: subscribe to tracked followees
 	}
 
-	private static BeamConstellationConnectable getConnectable() {
+	public static BeamConstellationConnectable getConnectable() {
 		if (null == connectable || (null != connectable && connectable.isClosed())) {
 			connectable = BeamManager.getConstellation().connectable(BeamManager.getBeam());
 
 			connectable.connect();
+
+			try {
+				init();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		return connectable;
@@ -80,159 +79,163 @@ public abstract class ConstellationManager {
 		}
 	}
 
-	private static void handleAnnouncements() {
+	private static void handleEvents() {
 		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
 
 			@Override
 			public void onEvent(LiveEvent event) {
-				JsonObject payload = event.data.payload;
-			}
-
-		});
-	}
-
-	private static void handleChannelUpdate() {
-		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
-
-			@Override
-			public void onEvent(LiveEvent event) {
-				try {
-					JsonObject payload = event.data.payload;
-
-					if (payload.has("online")) {
-						BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
-
-						if (null != channel) {
-							Set<BTBGuild> guilds = new HashSet<>();
-
-							try {
-								// Add all guilds that are tracking this
-								// channel's teams to the announce set
-								List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
-
-								for (TeamMembershipExpanded team : userTeams) {
-									guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true));
-								}
-
-								// Add all guilds that are tracking this channel
-								// to the announce set
-								guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
-
-								// TODO: Check if this channel/channel's user is
-								// following a channel in a guild's tracked
-								// follows
-								// (get
-								// all guilds in the db that are tracking anyone
-								// this channel/user is following)
-							} catch (SQLException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-
-							if (!guilds.isEmpty()) {
-								if (payload.get("online").getAsBoolean()) {
-									System.out.println(String.format("%s is now live!", channel.user.username));
-
-									for (BTBGuild guild : guilds) {
-										String messageID = JDAManager.sendMessage(guild.getGoLiveChannelID(),
-												JDAManager.buildGoLiveEmbed(channel));
-
-										if (guild.isRemoveOfflineChannelAnnouncements()) {
-											try {
-												DbManager.createGoLiveMessage(messageID, guild.getGoLiveChannelID(),
-														guild.getID(), channel.id);
-											} catch (SQLException e) {
-												// TODO Auto-generated catch
-												// block
-												e.printStackTrace();
-											}
-										}
-									}
-								} else {
-									System.out.println(String.format("%s is now offline!", channel.user.username));
-									// TODO: delete message when user goes
-									// offline
-									List<List<String>> messagesList = new ArrayList<List<String>>();
-
-									try {
-										messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
-
-										for (List<String> values : messagesList) {
-											JDAManager.deleteMessage(values.get(0), values.get(1), values.get(2));
-										}
-
-										DbManager.deleteGoLiveMessagesForChannel(channel.id);
-									} catch (SQLException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-								}
-							} else {
-
-							}
-						} else {
-							System.out.println(String.format("Unable to retrieve channel info for channel id %d",
-									getIDFromEvent(event.data.channel)));
-						}
+				switch (getEventFromEvent(event.data.channel)) {
+					case "announcement:announce": {
+						handleAnnouncements(event);
 					}
-				} catch (NumberFormatException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					break;
+					case "channel:update": {
+						handleChannelUpdate(event);
+					}
+					break;
+					case "channel:followed": {
+						handleChannelFollowed(event);
+					}
+					break;
+					case "team:memberAccepted": {
+						handleTeamMemberAccepted(event);
+					}
+					break;
+					case "team:memberInvited": {
+						handleTeamMemberInvited(event);
+					}
+					break;
+					case "team:memberRemoved": {
+						handleTeamMemberRemoved(event);
+					}
+					break;
+					case "team:ownerChanged": {
+						handleTeamOwnerChanged(event);
+					}
+					break;
+					case "user:followed": {
+						handleUserFollowed(event);
+					}
+					break;
+					default:
+					break;
 				}
 			}
 		});
 	}
 
-	private static void handleMemberAccepted() {
-		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+	private static void handleAnnouncements(LiveEvent event) {}
 
-			@Override
-			public void onEvent(LiveEvent event) {
-				JsonObject payload = event.data.payload;
+	private static void handleChannelUpdate(LiveEvent event) {
+		try {
+			JsonObject payload = event.data.payload;
+
+			if (payload.has("online")) {
+				BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
+
+				if (null != channel) {
+					Set<BTBGuild> guilds = new HashSet<>();
+
+					try {
+						// Add all guilds that are tracking this
+						// channel's teams to the announce set
+						List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
+
+						for (TeamMembershipExpanded team : userTeams) {
+							guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true));
+						}
+
+						// Add all guilds that are tracking this
+						// channel
+						// to the announce set
+						guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
+
+						// TODO: Check if this channel/channel's
+						// user is
+						// following a channel in a guild's tracked
+						// follows
+						// (get
+						// all guilds in the db that are tracking
+						// anyone
+						// this channel/user is following)
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					if (!guilds.isEmpty()) {
+						if (payload.get("online").getAsBoolean()) {
+							System.out.println(String.format("%s is now live!", channel.user.username));
+
+							for (BTBGuild guild : guilds) {
+								String messageID = JDAManager.sendMessage(guild.getGoLiveChannelID(),
+										JDAManager.buildGoLiveEmbed(channel));
+
+								if (guild.isRemoveOfflineChannelAnnouncements()) {
+									try {
+										DbManager.createGoLiveMessage(messageID, guild.getGoLiveChannelID(),
+												guild.getID(), channel.id);
+									} catch (SQLException e) {
+										// TODO Auto-generated catch
+										// block
+										e.printStackTrace();
+									}
+								}
+							}
+						} else {
+							System.out.println(String.format("%s is now offline!", channel.user.username));
+							// TODO: delete message when user goes
+							// offline
+							List<List<String>> messagesList = new ArrayList<List<String>>();
+
+							try {
+								messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
+
+								for (List<String> values : messagesList) {
+									JDAManager.deleteMessage(values.get(0), values.get(1), values.get(2));
+								}
+
+								DbManager.deleteGoLiveMessagesForChannel(channel.id);
+							} catch (SQLException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					} else {
+						unsubscribeFromEvent(event.data.channel);
+					}
+				} else {
+					System.out.println(String.format("Unable to retrieve channel info for channel id %d",
+							getIDFromEvent(event.data.channel)));
+				}
 			}
-
-		});
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	private static void handleMemberInvited() {
-		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
+	private static void handleChannelFollowed(LiveEvent event) {}
 
-			@Override
-			public void onEvent(LiveEvent event) {
-				JsonObject payload = event.data.payload;
-			}
+	private static void handleTeamMemberAccepted(LiveEvent event) {}
 
-		});
+	private static void handleTeamMemberInvited(LiveEvent event) {}
+
+	private static void handleTeamMemberRemoved(LiveEvent event) {}
+
+	private static void handleTeamOwnerChanged(LiveEvent event) {}
+
+	private static void handleUserFollowed(LiveEvent event) {
+
 	}
 
-	private static void handleMemberRemoved() {
-		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
-
-			@Override
-			public void onEvent(LiveEvent event) {
-				JsonObject payload = event.data.payload;
-			}
-
-		});
-	}
-
-	private static void handleOwnerChanged() {
-		getConnectable().on(LiveEvent.class, new EventHandler<LiveEvent>() {
-
-			@Override
-			public void onEvent(LiveEvent event) {
-				JsonObject payload = event.data.payload;
-			}
-
-		});
-	}
-
-	public static void subscribeToAnnouncements() {
+	private static void subscribeToAnnouncements() {
 		subscribeToEvent("announcement:announce");
 	}
 
 	public static void subscribeToChannel(int channelID) {
 		subscribeToEvent(String.format("channel:%d:update", channelID));
+		subscribeToEvent(String.format("channel:%d:followed", channelID));
 	}
 
 	public static void subscribeToTeam(BeamTeam team) {
@@ -246,6 +249,10 @@ public abstract class ConstellationManager {
 		subscribeToEvent(String.format("team:%d:memberInvited", team.id));
 		subscribeToEvent(String.format("team:%d:memberRemoved", team.id));
 		subscribeToEvent(String.format("team:%d:ownerChanged", team.id));
+	}
+
+	public static void subscribeToUser(int userID) {
+		subscribeToEvent(String.format("user:%d:followed", userID));
 	}
 
 	private static void subscribeToEvent(String event) {
@@ -282,5 +289,9 @@ public abstract class ConstellationManager {
 
 	private static int getIDFromEvent(String event) {
 		return Integer.parseInt(event.substring(event.indexOf(":") + 1, event.lastIndexOf(":")));
+	}
+
+	private static String getEventFromEvent(String event) {
+		return event.replaceAll(":[0-9]*:", ":");
 	}
 }

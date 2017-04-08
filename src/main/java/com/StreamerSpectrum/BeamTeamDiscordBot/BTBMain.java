@@ -22,7 +22,7 @@ public class BTBMain {
 	}
 
 	public static void load() throws SQLException {
-		ConstellationManager.init();
+		ConstellationManager.getConnectable();
 	}
 
 }
