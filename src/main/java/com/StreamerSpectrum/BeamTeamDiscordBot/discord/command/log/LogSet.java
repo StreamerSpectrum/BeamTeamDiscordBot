@@ -1,4 +1,4 @@
-package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive;
+package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.log;
 
 import java.util.List;
 
@@ -13,11 +13,11 @@ import me.jagrosh.jdautilities.commandclient.CommandEvent;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.TextChannel;
 
-public class GoLiveSet extends Command {
+public class LogSet extends Command {
 
-	public GoLiveSet() {
-		this.name = "goliveset";
-		this.help = "Sets the target channel as the announcement channel for when tracked team members go live.";
+	public LogSet() {
+		this.name = "logset";
+		this.help = "Sets the target channel as the log channel for all of this server's activity to be displayed.";
 		this.arguments = "channel";
 		this.userPermissions = new Permission[] { Permission.MANAGE_CHANNEL };
 	}
@@ -33,9 +33,9 @@ public class GoLiveSet extends Command {
 				if (!textChannels.isEmpty()) {
 					BTBGuild guild = GuildManager.getGuild(event.getGuild());
 
-					guild.setGoLiveChannelID(textChannels.get(0).getId());
+					guild.setLogChannelID(textChannels.get(0).getId());
 
-					JDAManager.sendMessage(event, "Go-live channel has been set to %s.", arg);
+					JDAManager.sendMessage(event, "Log channel has been set to %s.", arg);
 				} else {
 					JDAManager.sendMessage(event,
 							"I can't find the channel named %s. Please ensure it exists and that I have read & write priveleges for it.",
@@ -48,4 +48,5 @@ public class GoLiveSet extends Command {
 			JDAManager.sendMessage(event, "Missing arguments from command!");
 		}
 	}
+
 }

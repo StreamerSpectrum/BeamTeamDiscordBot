@@ -33,6 +33,10 @@ public abstract class CommandHelper {
 			team = BeamManager.getTeam(teamNameOrID);
 		}
 
+		if (null == team) {
+			JDAManager.sendMessage(event, "I cannot find the Beam team for identifier: %s", teamNameOrID);
+		}
+
 		return team;
 	}
 
@@ -44,6 +48,10 @@ public abstract class CommandHelper {
 			channel = BeamManager.getChannel(id);
 		} catch (NumberFormatException e) {
 			channel = BeamManager.getChannel(nameOrID);
+		}
+
+		if (null == channel) {
+			JDAManager.sendMessage(event, "I cannot find the Beam channel for identifier: %s", nameOrID);
 		}
 
 		return channel;
@@ -61,7 +69,6 @@ public abstract class CommandHelper {
 		return new PaginatorBuilder().setText(title).setItems(listItems)
 				.setColumns(numCols < 1 ? 1 : numCols > 3 ? 3 : numCols).setFinalAction(m -> {
 					try {
-						m.delete();
 						m.clearReactions().queue();
 					} catch (PermissionException e) {}
 				}).setItemsPerPage(10).waitOnSinglePage(false).useNumberedItems(true).showPageNumbers(true)

@@ -49,7 +49,7 @@ public abstract class BeamManager {
 
 	private static RateLimit getUserReadLimit() {
 		if (null == userReadLimit) {
-			userReadLimit = new RateLimit("user-read", 1, 15);
+			userReadLimit = new RateLimit("user-read", 60, 500);
 		}
 
 		return userReadLimit;

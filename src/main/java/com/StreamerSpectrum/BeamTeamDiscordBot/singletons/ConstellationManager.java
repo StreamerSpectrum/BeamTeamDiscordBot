@@ -40,17 +40,17 @@ public abstract class ConstellationManager {
 		handleMemberInvited();
 		handleMemberRemoved();
 		handleOwnerChanged();
-		
+
 		subscribeToAnnouncements();
-		
+
 		List<BeamTeam> teams = DbManager.readAllTeams();
-		
+
 		for (BeamTeam team : teams) {
 			subscribeToTeam(team);
 		}
-		
+
 		List<BTBBeamChannel> channels = DbManager.readAllChannels();
-		
+
 		for (BTBBeamChannel channel : channels) {
 			subscribeToChannel(channel.id);
 		}
@@ -117,6 +117,7 @@ public abstract class ConstellationManager {
 								// Add all guilds that are tracking this channel
 								// to the announce set
 								guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
+
 								// TODO: Check if this channel/channel's user is
 								// following a channel in a guild's tracked
 								// follows
@@ -128,16 +129,46 @@ public abstract class ConstellationManager {
 								e.printStackTrace();
 							}
 
-							if (payload.get("online").getAsBoolean()) {
-								System.out.println(String.format("%s is now live!", channel.user.username));
+							if (!guilds.isEmpty()) {
+								if (payload.get("online").getAsBoolean()) {
+									System.out.println(String.format("%s is now live!", channel.user.username));
 
-								for (BTBGuild guild : guilds) {
-									JDAManager.sendMessage(guild.getGoLiveChannelID(),
-											JDAManager.buildGoLiveEmbed(channel));
+									for (BTBGuild guild : guilds) {
+										String messageID = JDAManager.sendMessage(guild.getGoLiveChannelID(),
+												JDAManager.buildGoLiveEmbed(channel));
+
+										if (guild.isRemoveOfflineChannelAnnouncements()) {
+											try {
+												DbManager.createGoLiveMessage(messageID, guild.getGoLiveChannelID(),
+														guild.getID(), channel.id);
+											} catch (SQLException e) {
+												// TODO Auto-generated catch
+												// block
+												e.printStackTrace();
+											}
+										}
+									}
+								} else {
+									System.out.println(String.format("%s is now offline!", channel.user.username));
+									// TODO: delete message when user goes
+									// offline
+									List<List<String>> messagesList = new ArrayList<List<String>>();
+
+									try {
+										messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
+
+										for (List<String> values : messagesList) {
+											JDAManager.deleteMessage(values.get(0), values.get(1), values.get(2));
+										}
+
+										DbManager.deleteGoLiveMessagesForChannel(channel.id);
+									} catch (SQLException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
 								}
 							} else {
-								System.out.println(String.format("%s is now offline!", channel.user.username));
-								// TODO: delete message when user goes offline
+
 							}
 						} else {
 							System.out.println(String.format("Unable to retrieve channel info for channel id %d",
@@ -149,7 +180,6 @@ public abstract class ConstellationManager {
 					e.printStackTrace();
 				}
 			}
-
 		});
 	}
 

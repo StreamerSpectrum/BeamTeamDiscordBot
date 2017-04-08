@@ -15,6 +15,8 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.RandomMember;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.RestartConstellation;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.channel.ChannelRemove;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.channel.ChannelAdd;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.channel.ChannelList;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveDeleteOffline;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveRemove;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamAdd;
@@ -72,8 +74,9 @@ public abstract class JDAManager {
 		if (null == commandClient) {
 			commandClient = new CommandClientBuilder().useDefaultGame().setPrefix("!btb ")
 					.addCommands(new TeamAdd(), new TeamRemove(), new TeamList(), new RandomMember(), new PrimaryTeam(),
-							new MemberInfo(), new FollowReport(), new MemberList(), new GoLiveSet(), new GoLiveRemove(), new ChannelAdd(),
-							new ChannelRemove(), new RestartConstellation())
+							new MemberInfo(), new FollowReport(), new MemberList(), new GoLiveSet(), new GoLiveRemove(),
+							new GoLiveDeleteOffline(), new ChannelAdd(), new ChannelRemove(), new ChannelList(),
+							new RestartConstellation())
 					.build();
 		}
 
@@ -138,6 +141,19 @@ public abstract class JDAManager {
 
 	public static String sendMessage(CommandEvent event, String format, Object... args) {
 		return sendMessage(event.getChannel().getId(), format, args);
+	}
+
+	public static void deleteMessage(String messageID, String guildID, String goLiveChannelID) {
+		try {
+			getJDA().getGuildById(guildID).getTextChannelById(goLiveChannelID)
+					.deleteMessageById(messageID).queue();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RateLimitedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public static MessageEmbed buildGoLiveEmbed(BTBBeamChannel channel) {

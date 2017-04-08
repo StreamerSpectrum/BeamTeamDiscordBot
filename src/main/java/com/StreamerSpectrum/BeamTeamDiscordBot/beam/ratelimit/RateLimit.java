@@ -38,7 +38,7 @@ public class RateLimit {
 			synchronized (syncObject) {
 				// TODO: notify log channel that we're waiting for the rate
 				// limit to chill
-				System.out.println(String.format("%s has reached its rate limit.", NAME));
+				System.out.println(String.format("%s has reached its rate limit (%d/%d).", NAME, curCount, REQUEST_COUNT));
 				syncObject.wait();
 			}
 		}

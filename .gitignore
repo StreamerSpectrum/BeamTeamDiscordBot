@@ -104,3 +104,4 @@ buildNumber.properties
 src/main/resources/config.txt
 resources/config.txt
 .dbeaver-data-sources.xml
+*.db

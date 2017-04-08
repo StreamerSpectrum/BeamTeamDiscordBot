@@ -1,5 +1,7 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.singletons;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -9,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
@@ -24,8 +28,18 @@ public abstract class DbManager {
 	private static Connection getConnection() {
 		if (null == connection) {
 			try {
+				File dbFile = new File("resources/bt.db");
+				if (!dbFile.exists()) {
+					FileUtils.copyFile(new File("resources/bt.db.template"), dbFile);
+				}
+
+				updateDb();
+
 				connection = DriverManager.getConnection("jdbc:sqlite:resources/bt.db");
 			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -33,6 +47,8 @@ public abstract class DbManager {
 
 		return connection;
 	}
+
+	private static void updateDb() {}
 
 	private static boolean create(String tableName, Map<String, Object> values) throws SQLException {
 		if (StringUtils.isBlank(tableName)) {
@@ -204,7 +220,8 @@ public abstract class DbManager {
 		BTBGuild guild = null;
 
 		if (!values.isEmpty()) {
-			guild = new BTBGuild(id, GuildManager.getShardID(id), values.get(0).get(1));
+			guild = new BTBGuild(id, GuildManager.getShardID(id), values.get(0).get(1), values.get(0).get(2),
+					"1".equals((values.get(0).get(3))));
 		}
 
 		return guild;
@@ -215,8 +232,9 @@ public abstract class DbManager {
 		List<List<String>> valuesList = read(Constants.TABLE_GUILDS, null, null, null);
 
 		for (List<String> values : valuesList) {
-			guilds.add(new BTBGuild(Long.parseLong(values.get(0)),
-					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1)));
+			guilds.add(
+					new BTBGuild(Long.parseLong(values.get(0)), GuildManager.getShardID(Long.parseLong(values.get(0))),
+							values.get(1), values.get(2), "1".equals((values.get(3)))));
 		}
 
 		return guilds;
@@ -377,7 +395,8 @@ public abstract class DbManager {
 
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
-					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1));
+					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2),
+					"1".equals(values.get(3)));
 
 			guilds.add(guild);
 		}
@@ -394,7 +413,7 @@ public abstract class DbManager {
 		Map<String, Object> values = new HashMap<>();
 
 		values.put(Constants.TRACKEDCHANNELS_COL_GUILDID, guildID);
-		values.put(Constants.TRACKEDCHANNELS_COL_CHANNELID, channelID);
+		values.put(Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID);
 
 		return create(Constants.TABLE_TRACKEDCHANNELS, values);
 	}
@@ -405,7 +424,7 @@ public abstract class DbManager {
 		List<List<String>> valueLists = read(Constants.TABLE_CHANNELS, null,
 				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TABLE_CHANNELS,
 						Constants.CHANNELS_COL_ID, Constants.TABLE_TRACKEDCHANNELS,
-						Constants.TRACKEDCHANNELS_COL_CHANNELID),
+						Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID),
 				String.format("%s.%s = %d", Constants.TABLE_TRACKEDCHANNELS, Constants.TRACKEDCHANNELS_COL_GUILDID,
 						guildID));
 
@@ -428,7 +447,7 @@ public abstract class DbManager {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 
 		StringBuilder where = new StringBuilder(String.format("%s.%s = %d", Constants.TABLE_TRACKEDCHANNELS,
-				Constants.TRACKEDCHANNELS_COL_CHANNELID, channelID));
+				Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID));
 
 		if (requireGoLive) {
 			where.append(
@@ -443,7 +462,8 @@ public abstract class DbManager {
 
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
-					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1));
+					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2),
+					"1".equals(values.get(3)));
 
 			guilds.add(guild);
 		}
@@ -452,7 +472,32 @@ public abstract class DbManager {
 	}
 
 	public static boolean deleteTrackedChannel(long guildID, int channelID) throws SQLException {
-		return delete(Constants.TABLE_TRACKEDCHANNELS, String.format("%s = %d AND %s = %d",
-				Constants.TRACKEDCHANNELS_COL_GUILDID, guildID, Constants.TRACKEDCHANNELS_COL_CHANNELID, channelID));
+		return delete(Constants.TABLE_TRACKEDCHANNELS,
+				String.format("%s = %d AND %s = %d", Constants.TRACKEDCHANNELS_COL_GUILDID, guildID,
+						Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID));
+	}
+
+	public static boolean createGoLiveMessage(String messageID, String goLiveChannelID, long guildID, int beamChannelID)
+			throws SQLException {
+		Map<String, Object> values = new HashMap<>();
+
+		values.put(Constants.GOLIVEMESSAGES_COL_ID, messageID);
+		values.put(Constants.GOLIVEMESSAGES_COL_GOLIVECHANNELID, goLiveChannelID);
+		values.put(Constants.GOLIVEMESSAGES_COL_GUILDID, guildID);
+		values.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, beamChannelID);
+
+		return create(Constants.TABLE_GOLIVEMESSAGES, values);
+	}
+
+	public static List<List<String>> readAllGoLiveMessagesForChannel(int channelID) throws SQLException {
+		return read(Constants.TABLE_GOLIVEMESSAGES,
+				new String[] { Constants.GOLIVEMESSAGES_COL_ID, Constants.GOLIVEMESSAGES_COL_GUILDID,
+						Constants.GOLIVEMESSAGES_COL_GOLIVECHANNELID },
+				null, String.format("%s = %d", Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID));
+	}
+
+	public static boolean deleteGoLiveMessagesForChannel(int channelID) throws SQLException {
+		return delete(Constants.TABLE_GOLIVEMESSAGES,
+				String.format("%s = %d", Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID));
 	}
 }
