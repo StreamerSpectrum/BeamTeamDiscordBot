@@ -1,11 +1,19 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.singletons;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
@@ -13,7 +21,6 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.TeamMembershipExpanded;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 import com.google.gson.JsonObject;
-
 import pro.beam.api.resource.constellation.events.EventHandler;
 import pro.beam.api.resource.constellation.events.LiveEvent;
 import pro.beam.api.resource.constellation.methods.LiveSubscribeMethod;
@@ -86,50 +93,84 @@ public abstract class ConstellationManager {
 			public void onEvent(LiveEvent event) {
 				switch (getEventFromEvent(event.data.channel)) {
 					case "announcement:announce": {
-						handleAnnouncements(event);
+						handleAnnouncements(event, event.data.payload);
 					}
 					break;
 					case "channel:update": {
-						handleChannelUpdate(event);
+						handleChannelUpdate(event, event.data.payload);
 					}
 					break;
 					case "channel:followed": {
-						handleChannelFollowed(event);
+						handleChannelFollowed(event, event.data.payload);
 					}
 					break;
 					case "team:memberAccepted": {
-						handleTeamMemberAccepted(event);
+						handleTeamMemberAccepted(event, event.data.payload);
 					}
 					break;
 					case "team:memberInvited": {
-						handleTeamMemberInvited(event);
+						handleTeamMemberInvited(event, event.data.payload);
 					}
 					break;
 					case "team:memberRemoved": {
-						handleTeamMemberRemoved(event);
+						handleTeamMemberRemoved(event, event.data.payload);
 					}
 					break;
 					case "team:ownerChanged": {
-						handleTeamOwnerChanged(event);
+						handleTeamOwnerChanged(event, event.data.payload);
+					}
+					break;
+					case "team:deleted": {
+						handleTeamDeleted(event, event.data.payload);
 					}
 					break;
 					case "user:followed": {
-						handleUserFollowed(event);
+						handleUserFollowed(event, event.data.payload);
 					}
 					break;
 					default:
+						System.out.println(String.format("Unknown event: %s\n%s", event.data.channel,
+								event.data.payload.toString()));
+						try {
+							if (Files.notExists(Paths.get("payloads\\"))) {
+								new File("payloads\\").mkdir();
+							}
+
+							Logger logger = Logger.getLogger(String.format("payload-%s",
+									getEventFromEvent(event.data.channel).replaceAll(":", "")));
+							FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+							SimpleFormatter formatter = new SimpleFormatter();
+							fh.setFormatter(formatter);
+
+							logger.addHandler(fh);
+
+							logger.log(Level.INFO, event.data.payload.toString());
+						} catch (SecurityException | IOException e) {}
 					break;
 				}
 			}
 		});
 	}
 
-	private static void handleAnnouncements(LiveEvent event) {}
-
-	private static void handleChannelUpdate(LiveEvent event) {
+	private static void handleAnnouncements(LiveEvent event, JsonObject payload) {
 		try {
-			JsonObject payload = event.data.payload;
+			if (Files.notExists(Paths.get("payloads\\"))) {
+				new File("payloads\\").mkdir();
+			}
 
+			Logger logger = Logger.getLogger("payload-announcement");
+			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+
+			logger.addHandler(fh);
+
+			logger.log(Level.INFO, payload.toString());
+		} catch (SecurityException | IOException e) {}
+	}
+
+	private static void handleChannelUpdate(LiveEvent event, JsonObject payload) {
+		try {
 			if (payload.has("online")) {
 				BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
 
@@ -215,18 +256,116 @@ public abstract class ConstellationManager {
 		}
 	}
 
-	private static void handleChannelFollowed(LiveEvent event) {}
+	private static void handleChannelFollowed(LiveEvent event, JsonObject payload) {
+		try {
+			if (Files.notExists(Paths.get("payloads\\"))) {
+				new File("payloads\\").mkdir();
+			}
 
-	private static void handleTeamMemberAccepted(LiveEvent event) {}
+			Logger logger = Logger.getLogger("payload-channelFollowed");
+			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
 
-	private static void handleTeamMemberInvited(LiveEvent event) {}
+			logger.addHandler(fh);
 
-	private static void handleTeamMemberRemoved(LiveEvent event) {}
+			logger.log(Level.INFO, payload.toString());
+		} catch (SecurityException | IOException e) {}
+	}
 
-	private static void handleTeamOwnerChanged(LiveEvent event) {}
+	private static void handleTeamMemberAccepted(LiveEvent event, JsonObject payload) {
+		// TODO: Make a "member accepted" announcement to the appropriate
+		// channels
+		subscribeToChannel(BeamManager.getUser(payload.get("id").getAsInt()).channel.id);
+	}
 
-	private static void handleUserFollowed(LiveEvent event) {
+	private static void handleTeamMemberInvited(LiveEvent event, JsonObject payload) {
+		try {
+			if (Files.notExists(Paths.get("payloads\\"))) {
+				new File("payloads\\").mkdir();
+			}
 
+			Logger logger = Logger.getLogger("payload-teamMemberInvited");
+			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+
+			logger.addHandler(fh);
+
+			logger.log(Level.INFO, payload.toString());
+		} catch (SecurityException | IOException e) {}
+		// TODO: Make a "member was invited" announcement to the appropriate
+		// channels
+	}
+
+	private static void handleTeamMemberRemoved(LiveEvent event, JsonObject payload) {
+		try {
+			if (Files.notExists(Paths.get("payloads\\"))) {
+				new File("payloads\\").mkdir();
+			}
+
+			Logger logger = Logger.getLogger("payload-teamMemberRemoved");
+			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+
+			logger.addHandler(fh);
+
+			logger.log(Level.INFO, payload.toString());
+		} catch (SecurityException | IOException e) {}
+		// TODO: Make a "member has left" announcement to the appropriate
+		// channels
+	}
+
+	private static void handleTeamOwnerChanged(LiveEvent event, JsonObject payload) {
+		try {
+			if (Files.notExists(Paths.get("payloads\\"))) {
+				new File("payloads\\").mkdir();
+			}
+
+			Logger logger = Logger.getLogger("payload-teamOwnerChanged");
+			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+
+			logger.addHandler(fh);
+
+			logger.log(Level.INFO, payload.toString());
+		} catch (SecurityException | IOException e) {}
+	}
+
+	private static void handleTeamDeleted(LiveEvent event, JsonObject payload) {
+		try {
+			if (Files.notExists(Paths.get("payloads\\"))) {
+				new File("payloads\\").mkdir();
+			}
+
+			Logger logger = Logger.getLogger("payload-teamDeleted");
+			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+
+			logger.addHandler(fh);
+
+			logger.log(Level.INFO, payload.toString());
+		} catch (SecurityException | IOException e) {}
+	}
+
+	private static void handleUserFollowed(LiveEvent event, JsonObject payload) {
+		try {
+			if (Files.notExists(Paths.get("payloads\\"))) {
+				new File("payloads\\").mkdir();
+			}
+
+			Logger logger = Logger.getLogger("payload-userFollowed");
+			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+
+			logger.addHandler(fh);
+
+			logger.log(Level.INFO, payload.toString());
+		} catch (SecurityException | IOException e) {}
 	}
 
 	private static void subscribeToAnnouncements() {
@@ -235,6 +374,12 @@ public abstract class ConstellationManager {
 
 	public static void subscribeToChannel(int channelID) {
 		subscribeToEvent(String.format("channel:%d:update", channelID));
+		subscribeToEvent(String.format("channel:%d:status", channelID));
+		subscribeToEvent(String.format("chat:%d:StartStreaming", channelID));
+		subscribeToEvent(String.format("chat:%d:StopStreaming", channelID));
+	}
+
+	public static void subscribeToChannelFollowers(int channelID) {
 		subscribeToEvent(String.format("channel:%d:followed", channelID));
 	}
 
@@ -249,6 +394,7 @@ public abstract class ConstellationManager {
 		subscribeToEvent(String.format("team:%d:memberInvited", team.id));
 		subscribeToEvent(String.format("team:%d:memberRemoved", team.id));
 		subscribeToEvent(String.format("team:%d:ownerChanged", team.id));
+		subscribeToEvent(String.format("team:%d:deleted", team.id));
 	}
 
 	public static void subscribeToUser(int userID) {
@@ -265,10 +411,9 @@ public abstract class ConstellationManager {
 		getConnectable().send(lsm, new ReplyHandler<LiveRequestReply>() {
 
 			@Override
-			public void onSuccess(LiveRequestReply result) {
-				System.out.println(String.format("Successfully subscribed to %s.", event));
-			}
+			public void onSuccess(LiveRequestReply result) {}
 		});
+		System.out.println(String.format("Successfully subscribed to %s", event));
 	}
 
 	private static void unsubscribeFromEvent(String event) {
@@ -281,10 +426,9 @@ public abstract class ConstellationManager {
 		getConnectable().send(lum, new ReplyHandler<LiveRequestReply>() {
 
 			@Override
-			public void onSuccess(LiveRequestReply result) {
-				System.out.println(String.format("Successfully unsubscribed from %s.", event));
-			}
+			public void onSuccess(LiveRequestReply result) {}
 		});
+		System.out.println(String.format("Successfully unsubscribed from %s", event));
 	}
 
 	private static int getIDFromEvent(String event) {

@@ -26,11 +26,11 @@ public class RateLimit {
 			@Override
 			public void run() {
 				if (curCount > 0) {
+					System.out.println(
+							String.format("%s is resetting its rate limit (%d/%d).", NAME, curCount, REQUEST_COUNT));
 					curCount = 0;
 					synchronized (syncObject) {
 						syncObject.notify();
-						System.out.println(
-								String.format("%s has reset its rate limit (%d/%d).", NAME, curCount, REQUEST_COUNT));
 					}
 				}
 			}
