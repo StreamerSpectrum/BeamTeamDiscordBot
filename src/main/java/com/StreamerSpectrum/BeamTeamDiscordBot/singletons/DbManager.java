@@ -91,13 +91,13 @@ public abstract class DbManager {
 
 		StringBuilder cols = new StringBuilder();
 		if (null != columns && columns.length > 0) {
-
 			for (String columnName : columns) {
 				if (StringUtils.isNotBlank(columnName)) {
 					cols.append(columnName).append(", ");
 				}
 			}
 		}
+		
 		StringBuilder sql = new StringBuilder();
 		sql.append(String.format("SELECT %s FROM %s",
 				cols.length() > 0 ? cols.substring(0, cols.lastIndexOf(",")) : "*", tableName));
@@ -125,7 +125,7 @@ public abstract class DbManager {
 			statement.setQueryTimeout(30);
 
 			if (null != where && !where.isEmpty()) {
-				int i = 0;
+				int i = 1;
 				for (String key : where.keySet()) {
 					statement.setObject(i++, where.get(key));
 				}
@@ -241,7 +241,7 @@ public abstract class DbManager {
 			statement.setQueryTimeout(30);
 
 			if (null != where && !where.isEmpty()) {
-				int i = 0;
+				int i = 1;
 				for (String key : where.keySet()) {
 					statement.setObject(i++, where.get(key));
 				}
