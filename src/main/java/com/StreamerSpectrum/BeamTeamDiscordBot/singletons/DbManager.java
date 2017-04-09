@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.sqlite.SQLiteConfig;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
@@ -36,7 +37,9 @@ public abstract class DbManager {
 
 				updateDb();
 
-				connection = DriverManager.getConnection("jdbc:sqlite:resources/bt.db");
+				SQLiteConfig config = new SQLiteConfig();
+				config.enforceForeignKeys(true);
+				connection = DriverManager.getConnection("jdbc:sqlite:resources/bt.db", config.toProperties());
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
