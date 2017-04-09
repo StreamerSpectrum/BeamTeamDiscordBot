@@ -7,7 +7,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,14 +56,14 @@ public abstract class DbManager {
 			return false;
 		}
 
-		PreparedStatement statement = null;
-
 		StringBuilder columns = new StringBuilder();
 		StringBuilder vals = new StringBuilder();
 		for (String key : values.keySet()) {
 			columns.append(key).append(", ");
 			vals.append("?, ");
 		}
+
+		PreparedStatement statement = null;
 
 		try {
 			statement = getConnection().prepareStatement(String.format("INSERT INTO %s (%s) VALUES (%s);", tableName,
@@ -84,13 +83,11 @@ public abstract class DbManager {
 		}
 	}
 
-	private static List<List<String>> read(String tableName, String[] columns, String innerJoin, String where)
-			throws SQLException {
+	private static List<List<String>> read(String tableName, String[] columns, String innerJoin,
+			Map<String, Object> where) throws SQLException {
 		if (StringUtils.isBlank(tableName)) {
 			return new ArrayList<>();
 		}
-
-		Statement statement = null;
 
 		StringBuilder cols = new StringBuilder();
 		if (null != columns && columns.length > 0) {
@@ -101,26 +98,40 @@ public abstract class DbManager {
 				}
 			}
 		}
+		StringBuilder sql = new StringBuilder();
+		sql.append(String.format("SELECT %s FROM %s",
+				cols.length() > 0 ? cols.substring(0, cols.lastIndexOf(",")) : "*", tableName));
+
+		if (StringUtils.isNotBlank(innerJoin)) {
+			sql.append(String.format(" INNER JOIN %s", innerJoin));
+		}
+
+		if (null != where && !where.isEmpty()) {
+			StringBuilder whereBuilder = new StringBuilder(" WHERE ");
+
+			for (String key : where.keySet()) {
+				whereBuilder.append(String.format("%s = ? AND ", key));
+			}
+
+			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
+		}
+
+		sql.append(";");
+
+		PreparedStatement statement = null;
 
 		try {
-			statement = getConnection().createStatement();
+			statement = getConnection().prepareStatement(sql.toString());
 			statement.setQueryTimeout(30);
 
-			StringBuilder sql = new StringBuilder();
-			sql.append(String.format("SELECT %s FROM %s",
-					cols.length() > 0 ? cols.substring(0, cols.lastIndexOf(",")) : "*", tableName));
-
-			if (StringUtils.isNotBlank(innerJoin)) {
-				sql.append(String.format(" INNER JOIN %s", innerJoin));
+			if (null != where && !where.isEmpty()) {
+				int i = 0;
+				for (String key : where.keySet()) {
+					statement.setObject(i++, where.get(key));
+				}
 			}
 
-			if (StringUtils.isNotBlank(where)) {
-				sql.append(String.format(" WHERE %s", where));
-			}
-
-			sql.append(";");
-
-			ResultSet rs = statement.executeQuery(sql.toString());
+			ResultSet rs = statement.executeQuery();
 			List<List<String>> values = new ArrayList<>();
 
 			while (rs.next()) {
@@ -153,35 +164,47 @@ public abstract class DbManager {
 		}
 	}
 
-	private static boolean update(String tableName, Map<String, Object> newVals, String where) throws SQLException {
-		if (StringUtils.isBlank(tableName)) {
+	private static boolean update(String tableName, Map<String, Object> newVals, Map<String, Object> where)
+			throws SQLException {
+		if (StringUtils.isBlank(tableName) || null == newVals || newVals.isEmpty()) {
 			return false;
 		}
-
-		PreparedStatement statement = null;
 
 		StringBuilder sets = new StringBuilder();
 		for (String key : newVals.keySet()) {
 			sets.append(String.format("%s = ?, ", key));
 		}
 
-		try {
+		StringBuilder sql = new StringBuilder();
+		sql.append(String.format("UPDATE %s SET %s", tableName, sets.substring(0, sets.lastIndexOf(","))));
 
-			StringBuilder sql = new StringBuilder();
-			sql.append(String.format("UPDATE %s SET %s", tableName, sets.substring(0, sets.lastIndexOf(","))));
+		if (null != where && !where.isEmpty()) {
+			StringBuilder whereBuilder = new StringBuilder(" WHERE ");
 
-			if (StringUtils.isNotBlank(where)) {
-				sql.append(String.format(" WHERE %s", where));
+			for (String key : where.keySet()) {
+				whereBuilder.append(String.format("%s = ? AND ", key));
 			}
 
-			sql.append(";");
+			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
+		}
 
+		sql.append(";");
+
+		PreparedStatement statement = null;
+
+		try {
 			statement = getConnection().prepareStatement(sql.toString());
 			statement.setQueryTimeout(30);
 
 			int i = 1;
 			for (String key : newVals.keySet()) {
 				statement.setObject(i++, newVals.get(key));
+			}
+
+			if (null != where && !where.isEmpty()) {
+				for (String key : where.keySet()) {
+					statement.setObject(i++, where.get(key));
+				}
 			}
 
 			return statement.executeUpdate() > 0;
@@ -192,19 +215,39 @@ public abstract class DbManager {
 		}
 	}
 
-	private static boolean delete(String tableName, String where) throws SQLException {
+	private static boolean delete(String tableName, Map<String, Object> where) throws SQLException {
 		if (StringUtils.isBlank(tableName)) {
 			return false;
 		}
 
-		Statement statement = null;
+		StringBuilder sql = new StringBuilder(String.format("DELETE FROM %s", tableName));
+
+		if (null != where && !where.isEmpty()) {
+			StringBuilder whereBuilder = new StringBuilder(" WHERE ");
+
+			for (String key : where.keySet()) {
+				whereBuilder.append(String.format("%s = ? AND ", key));
+			}
+
+			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
+		}
+
+		sql.append(";");
+
+		PreparedStatement statement = null;
 
 		try {
-			statement = getConnection().createStatement();
+			statement = getConnection().prepareStatement(sql.toString());
 			statement.setQueryTimeout(30);
 
-			return statement.executeUpdate(String.format("DELETE FROM %s %s;", tableName,
-					null == where ? ";" : String.format("WHERE %s", where))) > 0;
+			if (null != where && !where.isEmpty()) {
+				int i = 0;
+				for (String key : where.keySet()) {
+					statement.setObject(i++, where.get(key));
+				}
+			}
+
+			return statement.executeUpdate() > 0;
 
 		} finally {
 			if (null != statement) {
@@ -218,8 +261,10 @@ public abstract class DbManager {
 	}
 
 	public static BTBGuild readGuild(long id) throws SQLException {
-		List<List<String>> values = read(Constants.TABLE_GUILDS, null, null,
-				String.format("%s = %d", Constants.GUILDS_COL_ID, id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.GUILDS_COL_ID, id);
+
+		List<List<String>> values = read(Constants.TABLE_GUILDS, null, null, where);
 
 		BTBGuild guild = null;
 
@@ -245,12 +290,17 @@ public abstract class DbManager {
 	}
 
 	public static boolean updateGuild(BTBGuild guild) throws SQLException {
-		return update(Constants.TABLE_GUILDS, guild.getDbValues(),
-				String.format("%s = %d", Constants.GUILDS_COL_ID, guild.getID()));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.GUILDS_COL_ID, guild.getID());
+
+		return update(Constants.TABLE_GUILDS, guild.getDbValues(), where);
 	}
 
 	public static boolean deleteGuild(long id) throws SQLException {
-		return delete(Constants.TABLE_GUILDS, String.format("%s = %d", Constants.GUILDS_COL_ID, id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.GUILDS_COL_ID, id);
+
+		return delete(Constants.TABLE_GUILDS, where);
 	}
 
 	public static boolean createChannel(BTBBeamChannel channel) throws SQLException {
@@ -258,8 +308,10 @@ public abstract class DbManager {
 	}
 
 	public static BTBBeamChannel readChannel(int id) throws SQLException {
-		List<List<String>> values = read(Constants.TABLE_CHANNELS, null, null,
-				String.format("%s = %d", Constants.CHANNELS_COL_ID, id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.CHANNELS_COL_ID, id);
+
+		List<List<String>> values = read(Constants.TABLE_CHANNELS, null, null, where);
 
 		BTBBeamChannel channel = null;
 
@@ -296,12 +348,17 @@ public abstract class DbManager {
 	}
 
 	public static boolean updateChannel(BTBBeamChannel channel) throws SQLException {
-		return update(Constants.TABLE_CHANNELS, channel.getDbValues(),
-				String.format("%s = %d", Constants.CHANNELS_COL_ID, channel.id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.CHANNELS_COL_ID, channel.id);
+
+		return update(Constants.TABLE_CHANNELS, channel.getDbValues(), where);
 	}
 
 	public static boolean deleteChannel(int id) throws SQLException {
-		return delete(Constants.TABLE_CHANNELS, String.format("%s = %d", Constants.CHANNELS_COL_ID, id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.CHANNELS_COL_ID, id);
+
+		return delete(Constants.TABLE_CHANNELS, where);
 	}
 
 	public static boolean createTeam(BeamTeam team) throws SQLException {
@@ -309,8 +366,10 @@ public abstract class DbManager {
 	}
 
 	public static BeamTeam readTeam(int id) throws SQLException {
-		List<List<String>> values = read(Constants.TABLE_TEAMS, null, null,
-				String.format("%s = %d", Constants.TEAMS_COL_ID, id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TEAMS_COL_ID, id);
+
+		List<List<String>> values = read(Constants.TABLE_TEAMS, null, null, where);
 
 		BeamTeam team = null;
 
@@ -343,12 +402,17 @@ public abstract class DbManager {
 	}
 
 	public static boolean updateTeam(BeamTeam team) throws SQLException {
-		return update(Constants.TABLE_TEAMS, team.getDbValues(),
-				String.format("%s = %d", Constants.TEAMS_COL_ID, team.id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TEAMS_COL_ID, team.id);
+
+		return update(Constants.TABLE_TEAMS, team.getDbValues(), where);
 	}
 
 	public static boolean deleteTeam(int id) throws SQLException {
-		return delete(Constants.TABLE_TEAMS, String.format("%s = %d", Constants.TEAMS_COL_ID, id));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TEAMS_COL_ID, id);
+
+		return delete(Constants.TABLE_TEAMS, where);
 	}
 
 	public static boolean createTrackedTeam(long guildID, int teamID) throws SQLException {
@@ -363,10 +427,13 @@ public abstract class DbManager {
 	public static List<BeamTeam> readTrackedTeamsForGuild(long guildID) throws SQLException {
 		List<BeamTeam> teams = new ArrayList<BeamTeam>();
 
+		Map<String, Object> where = new HashMap<>();
+		where.put(String.format("%s.%s", Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_GUILDID), guildID);
+
 		List<List<String>> valueLists = read(Constants.TABLE_TEAMS, null,
 				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDTEAMS, Constants.TABLE_TEAMS,
 						Constants.TEAMS_COL_ID, Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_TEAMID),
-				String.format("%s.%s = %d", Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_GUILDID, guildID));
+				where);
 
 		for (List<String> values : valueLists) {
 			BeamTeam team = new BeamTeam();
@@ -383,19 +450,18 @@ public abstract class DbManager {
 
 	public static List<BTBGuild> readGuildsForTrackedTeam(int teamID, boolean requireGoLive) throws SQLException {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
+		Map<String, Object> where = new HashMap<>();
 
-		StringBuilder where = new StringBuilder(
-				String.format("%s.%s = %d", Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_TEAMID, teamID));
+		where.put(String.format("%s.%s = %d", Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_TEAMID), teamID);
 
 		if (requireGoLive) {
-			where.append(
-					String.format(" AND %s.%s NOT NULL", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID));
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID), "NOT NULL");
 		}
 
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,
 				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDTEAMS, Constants.TABLE_GUILDS,
 						Constants.GUILDS_COL_ID, Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_GUILDID),
-				where.toString());
+				where);
 
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
@@ -409,8 +475,11 @@ public abstract class DbManager {
 	}
 
 	public static boolean deleteTrackedTeam(long guildID, int teamID) throws SQLException {
-		return delete(Constants.TABLE_TRACKEDTEAMS, String.format("%s = %d AND %s = %d",
-				Constants.TRACKEDTEAMS_COL_GUILDID, guildID, Constants.TRACKEDTEAMS_COL_TEAMID, teamID));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TRACKEDTEAMS_COL_GUILDID, guildID);
+		where.put(Constants.TRACKEDTEAMS_COL_TEAMID, teamID);
+
+		return delete(Constants.TABLE_TRACKEDTEAMS, where);
 	}
 
 	public static boolean createTrackedChannel(long guildID, int channelID) throws SQLException {
@@ -424,13 +493,15 @@ public abstract class DbManager {
 
 	public static List<BTBBeamChannel> readTrackedChannelsForGuild(long guildID) throws SQLException {
 		List<BTBBeamChannel> channels = new ArrayList<BTBBeamChannel>();
+		Map<String, Object> where = new HashMap<>();
+		where.put(String.format("%s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TRACKEDCHANNELS_COL_GUILDID),
+				guildID);
 
 		List<List<String>> valueLists = read(Constants.TABLE_CHANNELS, null,
 				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TABLE_CHANNELS,
 						Constants.CHANNELS_COL_ID, Constants.TABLE_TRACKEDCHANNELS,
 						Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID),
-				String.format("%s.%s = %d", Constants.TABLE_TRACKEDCHANNELS, Constants.TRACKEDCHANNELS_COL_GUILDID,
-						guildID));
+				where);
 
 		for (List<String> values : valueLists) {
 			BTBBeamChannel channel = new BTBBeamChannel();
@@ -450,19 +521,19 @@ public abstract class DbManager {
 	public static List<BTBGuild> readGuildsForTrackedChannel(int channelID, boolean requireGoLive) throws SQLException {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 
-		StringBuilder where = new StringBuilder(String.format("%s.%s = %d", Constants.TABLE_TRACKEDCHANNELS,
-				Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID));
+		Map<String, Object> where = new HashMap<>();
+		where.put(String.format("%s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID),
+				channelID);
 
 		if (requireGoLive) {
-			where.append(
-					String.format(" AND %s.%s NOT NULL", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID));
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID), "NOT NULL");
 		}
 
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,
 				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TABLE_GUILDS,
 						Constants.GUILDS_COL_ID, Constants.TABLE_TRACKEDCHANNELS,
 						Constants.TRACKEDCHANNELS_COL_GUILDID),
-				where.toString());
+				where);
 
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
@@ -476,9 +547,11 @@ public abstract class DbManager {
 	}
 
 	public static boolean deleteTrackedChannel(long guildID, int channelID) throws SQLException {
-		return delete(Constants.TABLE_TRACKEDCHANNELS,
-				String.format("%s = %d AND %s = %d", Constants.TRACKEDCHANNELS_COL_GUILDID, guildID,
-						Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TRACKEDCHANNELS_COL_GUILDID, guildID);
+		where.put(Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID);
+
+		return delete(Constants.TABLE_TRACKEDCHANNELS, where);
 	}
 
 	public static boolean createGoLiveMessage(GoLiveMessage message) throws SQLException {
@@ -488,10 +561,13 @@ public abstract class DbManager {
 	public static List<GoLiveMessage> readAllGoLiveMessagesForChannel(int channelID) throws SQLException {
 		List<GoLiveMessage> messages = new ArrayList<>();
 
-		List<List<String>> valueLists = read(Constants.TABLE_GOLIVEMESSAGES,
-				new String[] { Constants.GOLIVEMESSAGES_COL_ID, Constants.GOLIVEMESSAGES_COL_GUILDID,
-						Constants.GOLIVEMESSAGES_COL_GOLIVECHANNELID },
-				null, String.format("%s = %d", Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID);
+
+		List<List<String>> valueLists = read(
+				Constants.TABLE_GOLIVEMESSAGES, new String[] { Constants.GOLIVEMESSAGES_COL_ID,
+						Constants.GOLIVEMESSAGES_COL_GUILDID, Constants.GOLIVEMESSAGES_COL_GOLIVECHANNELID },
+				null, where);
 
 		for (List<String> values : valueLists) {
 			messages.add(new GoLiveMessage(values.get(0), values.get(1), Long.parseLong(values.get(2)),
@@ -502,7 +578,9 @@ public abstract class DbManager {
 	}
 
 	public static boolean deleteGoLiveMessagesForChannel(int channelID) throws SQLException {
-		return delete(Constants.TABLE_GOLIVEMESSAGES,
-				String.format("%s = %d", Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID));
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID);
+
+		return delete(Constants.TABLE_GOLIVEMESSAGES, where);
 	}
 }
