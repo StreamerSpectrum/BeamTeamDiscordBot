@@ -40,7 +40,7 @@ public abstract class ConstellationManager {
 
 		subscribeToAnnouncements();
 
-		List<BeamTeam> teams = DbManager.readAllTeams();
+		List<BeamTeam> teams = DbManager.readAllTrackedTeams();
 
 		for (BeamTeam team : teams) {
 			subscribeToTeam(team);
@@ -49,7 +49,7 @@ public abstract class ConstellationManager {
 		List<BTBBeamChannel> channels = DbManager.readAllChannels();
 
 		for (BTBBeamChannel channel : channels) {
-			subscribeToChannel(channel.id);
+			subscribeToChannel(channel);
 		}
 
 		// TODO: subscribe to tracked followers
@@ -275,7 +275,7 @@ public abstract class ConstellationManager {
 	private static void handleTeamMemberAccepted(LiveEvent event, JsonObject payload) {
 		// TODO: Make a "member accepted" announcement to the appropriate
 		// channels
-		subscribeToChannel(BeamManager.getUser(payload.get("id").getAsInt()).channel.id);
+		subscribeToChannel(BeamManager.getUser(payload.get("id").getAsInt()).channel);
 	}
 
 	private static void handleTeamMemberInvited(LiveEvent event, JsonObject payload) {
@@ -371,11 +371,13 @@ public abstract class ConstellationManager {
 		subscribeToEvent("announcement:announce");
 	}
 
-	public static void subscribeToChannel(int channelID) {
-		subscribeToEvent(String.format("channel:%d:update", channelID));
-		subscribeToEvent(String.format("channel:%d:status", channelID));
-		subscribeToEvent(String.format("chat:%d:StartStreaming", channelID));
-		subscribeToEvent(String.format("chat:%d:StopStreaming", channelID));
+	public static void subscribeToChannel(BTBBeamChannel channel) {
+		System.out.println(String.format("Subscribing to %s's channel.", channel.token));
+
+		subscribeToEvent(String.format("channel:%d:update", channel.id));
+		subscribeToEvent(String.format("channel:%d:status", channel.id));
+		subscribeToEvent(String.format("chat:%d:StartStreaming", channel.id));
+		subscribeToEvent(String.format("chat:%d:StopStreaming", channel.id));
 	}
 
 	public static void subscribeToChannelFollowers(int channelID) {
@@ -383,10 +385,11 @@ public abstract class ConstellationManager {
 	}
 
 	public static void subscribeToTeam(BeamTeam team) {
+		System.out.println(String.format("Subscribing to team \"%s\" and its members' channels.", team.name));
 		List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
 
 		for (BeamTeamUser member : teamMembers) {
-			subscribeToChannel(member.channel.id);
+			subscribeToChannel(member.channel);
 		}
 
 		subscribeToEvent(String.format("team:%d:memberAccepted", team.id));

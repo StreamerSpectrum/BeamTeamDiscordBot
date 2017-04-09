@@ -19,41 +19,10 @@ public class BeamTeamUser implements Serializable {
 	public Integer			primaryTeam;
 	public Date				createdAt;
 	public Date				updatedAt;
-	public Channel			channel;
+	public BTBBeamChannel			channel;
 
 	@SerializedName("TeamMembership")
 	public TeamMembership	teamMembership;
-
-	public class Channel implements Serializable {
-		public boolean	featured;
-		public Integer	id;
-		public Integer	userId;
-		public String	token;
-		public boolean	online;
-		public boolean	partnered;
-		public Integer	transcodingProfileId;
-		public boolean	suspended;
-		public String	name;
-		public String	audience;
-		public Integer	viewersTotal;
-		public Integer	viewersCurrent;
-		public Integer	numFollowers;
-		public String	description;
-		public Integer	typeId;
-		public boolean	interactive;
-		public Integer	interactiveGameId;
-		public Integer	ftl;
-		public boolean	hasVod;
-		public Integer	languageId;
-		public Integer	coverId;
-		public Integer	thumbnailId;
-		public Integer	badgeId;
-		public Integer	hosteeId;
-		public boolean	hasTranscodes;
-		public boolean	vodsEnabled;
-		public Date		createdAt;
-		public Date		updatedAt;
-	}
 
 	@Override
 	public int hashCode() {

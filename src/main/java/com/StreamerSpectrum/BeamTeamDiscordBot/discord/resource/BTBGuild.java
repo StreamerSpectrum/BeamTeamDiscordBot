@@ -188,7 +188,7 @@ public class BTBGuild {
 		}
 
 		if (added) {
-			ConstellationManager.subscribeToChannel(channel.id);
+			ConstellationManager.subscribeToChannel(channel);
 		}
 
 		return added;

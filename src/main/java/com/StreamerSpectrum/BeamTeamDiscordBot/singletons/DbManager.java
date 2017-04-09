@@ -474,6 +474,27 @@ public abstract class DbManager {
 		return guilds;
 	}
 
+	public static List<BeamTeam> readAllTrackedTeams() throws SQLException {
+		List<BeamTeam> teams = new ArrayList<>();
+
+		List<List<String>> valueLists = read(Constants.TABLE_TEAMS, null,
+				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDTEAMS, Constants.TABLE_TEAMS,
+						Constants.TEAMS_COL_ID, Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_TEAMID),
+				null);
+
+		for (List<String> values : valueLists) {
+			BeamTeam team = new BeamTeam();
+
+			team.id = Integer.parseInt(values.get(0));
+			team.name = values.get(1);
+			team.token = values.get(2);
+
+			teams.add(team);
+		}
+
+		return teams;
+	}
+
 	public static boolean deleteTrackedTeam(long guildID, int teamID) throws SQLException {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TRACKEDTEAMS_COL_GUILDID, guildID);
@@ -544,6 +565,30 @@ public abstract class DbManager {
 		}
 
 		return guilds;
+	}
+
+	public static List<BTBBeamChannel> readAllTrackedChannels() throws SQLException {
+		List<BTBBeamChannel> channels = new ArrayList<>();
+
+		List<List<String>> valueLists = read(Constants.TABLE_CHANNELS, null,
+				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TABLE_CHANNELS,
+						Constants.CHANNELS_COL_ID, Constants.TABLE_TRACKEDCHANNELS,
+						Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID),
+				null);
+
+		for (List<String> values : valueLists) {
+			BTBBeamChannel channel = new BTBBeamChannel();
+
+			channel.id = Integer.parseInt(values.get(0));
+			channel.user = new BTBBeamUser();
+			channel.user.username = values.get(1);
+			channel.token = values.get(2);
+			channel.userId = Integer.parseInt(values.get(3));
+
+			channels.add(channel);
+		}
+
+		return channels;
 	}
 
 	public static boolean deleteTrackedChannel(long guildID, int channelID) throws SQLException {
