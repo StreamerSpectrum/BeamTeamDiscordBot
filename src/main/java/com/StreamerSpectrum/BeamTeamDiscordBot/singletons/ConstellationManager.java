@@ -241,6 +241,7 @@ public abstract class ConstellationManager {
 							}
 						}
 					} else {
+						System.out.println(String.format("No one is tracking %s's channel.", channel.user.username));
 						unsubscribeFromEvent(event.data.channel);
 					}
 				} else {

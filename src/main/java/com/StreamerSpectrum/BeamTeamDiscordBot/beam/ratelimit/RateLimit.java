@@ -8,11 +8,12 @@ public class RateLimit {
 	private final long			TIME_INTERVAL;
 	private final String		NAME;
 
-	private final SyncObject	syncObject	= new SyncObject();
+	private final SyncObject	syncObject		= new SyncObject();
 
-	private Timer				timer		= new Timer();
+	private Timer				timer			= new Timer();
 
 	private volatile int		curCount;
+	private volatile long		lastResetTime	= System.currentTimeMillis();
 
 	public RateLimit(String name, int requestCount, long timeInterval) {
 		NAME = name;
@@ -29,6 +30,7 @@ public class RateLimit {
 					System.out.println(
 							String.format("%s is resetting its rate limit (%d/%d).", NAME, curCount, REQUEST_COUNT));
 					curCount = 0;
+					lastResetTime = System.currentTimeMillis();
 					synchronized (syncObject) {
 						syncObject.notify();
 					}
@@ -40,10 +42,8 @@ public class RateLimit {
 	public boolean isNotLimited() throws InterruptedException {
 		if (curCount >= REQUEST_COUNT) {
 			synchronized (syncObject) {
-				// TODO: notify log channel that we're waiting for the rate
-				// limit to chill
-				System.out.println(
-						String.format("%s has reached its rate limit (%d/%d).", NAME, curCount, REQUEST_COUNT));
+				System.out.println(String.format("%s has reached its rate limit (%d/%d). Reset in %ds", NAME, curCount,
+						REQUEST_COUNT, ((lastResetTime + TIME_INTERVAL) - System.currentTimeMillis()) / 1000));
 				syncObject.wait();
 			}
 		}
