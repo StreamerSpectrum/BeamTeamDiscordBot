@@ -158,20 +158,14 @@ public abstract class DbManager {
 			return false;
 		}
 
-		Statement statement = null;
+		PreparedStatement statement = null;
 
 		StringBuilder sets = new StringBuilder();
 		for (String key : newVals.keySet()) {
-			if (newVals.get(key) == null) {
-				sets.append(String.format("%s = null, ", key));
-			} else {
-				sets.append(String.format("%s = '%s', ", key, newVals.get(key)));
-			}
+			sets.append(String.format("%s = ?, ", key));
 		}
 
 		try {
-			statement = getConnection().createStatement();
-			statement.setQueryTimeout(30);
 
 			StringBuilder sql = new StringBuilder();
 			sql.append(String.format("UPDATE %s SET %s", tableName, sets.substring(0, sets.lastIndexOf(","))));
@@ -182,7 +176,15 @@ public abstract class DbManager {
 
 			sql.append(";");
 
-			return statement.executeUpdate(sql.toString()) > 0;
+			statement = getConnection().prepareStatement(sql.toString());
+			statement.setQueryTimeout(30);
+
+			int i = 1;
+			for (String key : newVals.keySet()) {
+				statement.setObject(i++, newVals.get(key));
+			}
+
+			return statement.executeUpdate() > 0;
 		} finally {
 			if (null != statement) {
 				statement.close();
