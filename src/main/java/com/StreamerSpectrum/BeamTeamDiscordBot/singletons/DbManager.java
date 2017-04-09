@@ -20,6 +20,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 
 public abstract class DbManager {
 
@@ -477,23 +478,24 @@ public abstract class DbManager {
 						Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID));
 	}
 
-	public static boolean createGoLiveMessage(String messageID, String goLiveChannelID, long guildID, int beamChannelID)
-			throws SQLException {
-		Map<String, Object> values = new HashMap<>();
-
-		values.put(Constants.GOLIVEMESSAGES_COL_ID, messageID);
-		values.put(Constants.GOLIVEMESSAGES_COL_GOLIVECHANNELID, goLiveChannelID);
-		values.put(Constants.GOLIVEMESSAGES_COL_GUILDID, guildID);
-		values.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, beamChannelID);
-
-		return create(Constants.TABLE_GOLIVEMESSAGES, values);
+	public static boolean createGoLiveMessage(GoLiveMessage message) throws SQLException {
+		return create(Constants.TABLE_GOLIVEMESSAGES, message.getDbValues());
 	}
 
-	public static List<List<String>> readAllGoLiveMessagesForChannel(int channelID) throws SQLException {
-		return read(Constants.TABLE_GOLIVEMESSAGES,
+	public static List<GoLiveMessage> readAllGoLiveMessagesForChannel(int channelID) throws SQLException {
+		List<GoLiveMessage> messages = new ArrayList<>();
+
+		List<List<String>> valueLists = read(Constants.TABLE_GOLIVEMESSAGES,
 				new String[] { Constants.GOLIVEMESSAGES_COL_ID, Constants.GOLIVEMESSAGES_COL_GUILDID,
 						Constants.GOLIVEMESSAGES_COL_GOLIVECHANNELID },
 				null, String.format("%s = %d", Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID));
+
+		for (List<String> values : valueLists) {
+			messages.add(new GoLiveMessage(values.get(0), values.get(1), Long.parseLong(values.get(2)),
+					Integer.parseInt(values.get(3))));
+		}
+
+		return messages;
 	}
 
 	public static boolean deleteGoLiveMessagesForChannel(int channelID) throws SQLException {

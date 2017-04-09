@@ -20,6 +20,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.TeamMembershipExpanded;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 import com.google.gson.JsonObject;
 import pro.beam.api.resource.constellation.events.EventHandler;
 import pro.beam.api.resource.constellation.events.LiveEvent;
@@ -211,29 +212,26 @@ public abstract class ConstellationManager {
 							for (BTBGuild guild : guilds) {
 								String messageID = JDAManager.sendMessage(guild.getGoLiveChannelID(),
 										JDAManager.buildGoLiveEmbed(channel));
-
-								if (guild.isRemoveOfflineChannelAnnouncements()) {
-									try {
-										DbManager.createGoLiveMessage(messageID, guild.getGoLiveChannelID(),
-												guild.getID(), channel.id);
-									} catch (SQLException e) {
-										// TODO Auto-generated catch
-										// block
-										e.printStackTrace();
-									}
+								try {
+									DbManager.createGoLiveMessage(new GoLiveMessage(messageID,
+											guild.getGoLiveChannelID(), guild.getID(), channel.id));
+								} catch (SQLException e) {
+									// TODO Auto-generated catch
+									// block
+									e.printStackTrace();
 								}
 							}
 						} else {
 							System.out.println(String.format("%s is now offline!", channel.user.username));
 							// TODO: delete message when user goes
 							// offline
-							List<List<String>> messagesList = new ArrayList<List<String>>();
+							List<GoLiveMessage> messagesList = new ArrayList<>();
 
 							try {
 								messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
 
-								for (List<String> values : messagesList) {
-									JDAManager.deleteMessage(values.get(0), values.get(1), values.get(2));
+								for (GoLiveMessage message : messagesList) {
+									JDAManager.deleteMessage(message);
 								}
 
 								DbManager.deleteGoLiveMessagesForChannel(channel.id);

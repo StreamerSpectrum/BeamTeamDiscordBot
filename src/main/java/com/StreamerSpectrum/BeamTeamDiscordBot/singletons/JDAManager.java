@@ -22,6 +22,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberInfo;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
@@ -141,6 +142,10 @@ public abstract class JDAManager {
 
 	public static String sendMessage(CommandEvent event, String format, Object... args) {
 		return sendMessage(event.getChannel().getId(), format, args);
+	}
+
+	public static void deleteMessage(GoLiveMessage message) {
+		deleteMessage(message.getMessageID(), Long.toString(message.getGuildID()), message.getGoLiveChannelID());
 	}
 
 	public static void deleteMessage(String messageID, String guildID, String goLiveChannelID) {
