@@ -94,6 +94,17 @@ public abstract class CommandHelper {
 		builder.build().paginate(event.getChannel(), 0);
 	}
 
+	public static void sendPaginationDM(CommandEvent event, String[] listItems, int numCols, String title) {
+	}
+
+	public static void sendPaginationDM(CommandEvent event, String[] listItems, int numCols, String format,
+			Object... args) {
+	}
+
+	public static void sendPaginationDM(CommandEvent event, PaginatorBuilder builder) {
+		builder.build().paginate(JDAManager.getPrivateChannel(event.getAuthor()), 0);
+	}
+
 	public static void sendTeamUserEmbed(CommandEvent event, BeamTeamUser member) {
 		JDAManager.sendMessage(event,
 				new EmbedBuilder().setTitle(member.username, String.format("https://beam.pro/%s", member.username))

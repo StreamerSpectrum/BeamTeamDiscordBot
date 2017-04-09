@@ -43,15 +43,15 @@ public class FollowReport extends Command {
 					BTBBeamUser user = BeamManager.getUser(userArg);
 
 					List<BTBBeamChannel> userFollows = BeamManager.getFollowing(user);
-					
+
 					for (BeamTeamUser member : teamMembers) {
 						if (!member.equals(user)) {
 							boolean isNotFollowingMember = true;
 
 							for (BTBBeamChannel followee : userFollows) {
 								if (member.channel.id == followee.id) {
-									followingList.append(String.format("[%s](https://beam.pro/%s)\n",
-											member.username, member.username));
+									followingList.append(String.format("[%s](https://beam.pro/%s)\n", member.username,
+											member.username));
 									isNotFollowingMember = false;
 									++followingCount;
 									break;
@@ -61,8 +61,8 @@ public class FollowReport extends Command {
 							}
 
 							if (isNotFollowingMember) {
-								notFollowingList.append(String.format("[%s](https://beam.pro/%s)\n",
-										member.username, member.username));
+								notFollowingList.append(
+										String.format("[%s](https://beam.pro/%s)\n", member.username, member.username));
 								++notFollowingCount;
 							}
 						}
@@ -76,11 +76,11 @@ public class FollowReport extends Command {
 						notFollowingList.append("NONE");
 					}
 
-					CommandHelper.sendPagination(event, followingList.toString().split("\n"), 1,
+					CommandHelper.sendPaginationDM(event, followingList.toString().split("\n"), 1,
 							"%s is Following %d/%d %s Members", user.username, followingCount, teamMembers.size(),
 							team.name);
 
-					CommandHelper.sendPagination(event, notFollowingList.toString().split("\n"), 1,
+					CommandHelper.sendPaginationDM(event, notFollowingList.toString().split("\n"), 1,
 							"%s is Not Following %d/%d %s Members", user.username, notFollowingCount,
 							teamMembers.size(), team.name);
 				}

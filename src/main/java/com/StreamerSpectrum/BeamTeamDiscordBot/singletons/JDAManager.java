@@ -12,7 +12,7 @@ import javax.security.auth.login.LoginException;
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.RandomMember;
-import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.RestartConstellation;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.admin.RestartConstellation;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.channel.ChannelRemove;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.channel.ChannelAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.channel.ChannelList;
@@ -42,6 +42,8 @@ import net.dv8tion.jda.core.OnlineStatus;
 import net.dv8tion.jda.core.entities.Game;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageEmbed;
+import net.dv8tion.jda.core.entities.PrivateChannel;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import pro.beam.api.util.Enums;
 
@@ -150,8 +152,7 @@ public abstract class JDAManager {
 
 	public static void deleteMessage(String messageID, String guildID, String goLiveChannelID) {
 		try {
-			getJDA().getGuildById(guildID).getTextChannelById(goLiveChannelID)
-					.deleteMessageById(messageID).queue();
+			getJDA().getGuildById(guildID).getTextChannelById(goLiveChannelID).deleteMessageById(messageID).queue();
 		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -177,4 +178,25 @@ public abstract class JDAManager {
 				.setFooter("Beam.pro", CommandHelper.BEAM_LOGO_URL).setTimestamp(Instant.now())
 				.setColor(CommandHelper.COLOR).build();
 	}
+
+	public static PrivateChannel getPrivateChannel(User user) {
+		if (!user.hasPrivateChannel()) {
+			user.openPrivateChannel();
+		}
+
+		return user.getPrivateChannel();
+	}
+
+		getPrivateChannel(event.getAuthor()).sendMessage(msg);
+	}
+
+		getPrivateChannel(event.getAuthor()).sendMessage(embed);
+	}
+
+		getPrivateChannel(event.getAuthor()).sendMessage(text);
+	}
+
+		getPrivateChannel(event.getAuthor()).sendMessage(format, args);
+	}
+
 }

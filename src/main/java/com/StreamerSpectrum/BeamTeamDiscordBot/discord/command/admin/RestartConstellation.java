@@ -1,4 +1,4 @@
-package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command;
+package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.admin;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.ConstellationManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
