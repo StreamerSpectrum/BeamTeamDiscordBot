@@ -179,17 +179,12 @@ public abstract class ConstellationManager {
 					Set<BTBGuild> guilds = new HashSet<>();
 
 					try {
-						// Add all guilds that are tracking this
-						// channel's teams to the announce set
 						List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
 
 						for (TeamMembershipExpanded team : userTeams) {
 							guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true));
 						}
 
-						// Add all guilds that are tracking this
-						// channel
-						// to the announce set
 						guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
 
 						// TODO: Check if this channel/channel's
@@ -223,15 +218,17 @@ public abstract class ConstellationManager {
 							}
 						} else {
 							System.out.println(String.format("%s is now offline!", channel.user.username));
-							// TODO: delete message when user goes
-							// offline
+
 							List<GoLiveMessage> messagesList = new ArrayList<>();
 
 							try {
 								messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
 
 								for (GoLiveMessage message : messagesList) {
-									JDAManager.deleteMessage(message);
+									if (DbManager.readGuild(message.getGuildID())
+											.isRemoveOfflineChannelAnnouncements()) {
+										JDAManager.deleteMessage(message);
+									}
 								}
 
 								DbManager.deleteGoLiveMessagesForChannel(channel.id);

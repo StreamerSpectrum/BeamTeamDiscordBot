@@ -96,8 +96,7 @@ public abstract class JDAManager {
 
 	public static String sendMessage(String channelID, Message msg) {
 		try {
-			getJDA().getTextChannelById(channelID).sendMessage(msg).queue();
-			return getJDA().getTextChannelById(channelID).getLatestMessageId();
+			return getJDA().getTextChannelById(channelID).sendMessage(msg).complete().getId();
 		} catch (IllegalArgumentException | RateLimitedException e) {
 			return null;
 		}
@@ -105,8 +104,7 @@ public abstract class JDAManager {
 
 	public static String sendMessage(String channelID, MessageEmbed embed) {
 		try {
-			getJDA().getTextChannelById(channelID).sendMessage(embed).queue();
-			return getJDA().getTextChannelById(channelID).getLatestMessageId();
+			return getJDA().getTextChannelById(channelID).sendMessage(embed).complete().getId();
 		} catch (IllegalArgumentException | RateLimitedException e) {
 			return null;
 		}
@@ -114,8 +112,7 @@ public abstract class JDAManager {
 
 	public static String sendMessage(String channelID, String text) {
 		try {
-			getJDA().getTextChannelById(channelID).sendMessage(text).queue();
-			return getJDA().getTextChannelById(channelID).getLatestMessageId();
+			return getJDA().getTextChannelById(channelID).sendMessage(text).complete().getId();
 		} catch (IllegalArgumentException | RateLimitedException e) {
 			return null;
 		}
@@ -123,8 +120,7 @@ public abstract class JDAManager {
 
 	public static String sendMessage(String channelID, String format, Object... args) {
 		try {
-			getJDA().getTextChannelById(channelID).sendMessage(format, args).queue();
-			return getJDA().getTextChannelById(channelID).getLatestMessageId();
+			return getJDA().getTextChannelById(channelID).sendMessage(format, args).complete().getId();
 		} catch (IllegalArgumentException | RateLimitedException e) {
 			return null;
 		}
@@ -169,7 +165,7 @@ public abstract class JDAManager {
 				.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?_=%d", channel.user.id,
 						new Random().nextInt()))
 				.setDescription(StringUtils.isBlank(channel.user.bio) ? "No bio" : channel.user.bio)
-				.addField(channel.name, channel.type.name, false)
+				.addField(channel.name, channel.type == null ? "No game selected" : channel.type.name, false)
 				.addField("Followers", Integer.toString(channel.numFollowers), true)
 				.addField("Views", Integer.toString(channel.viewersTotal), true)
 				.addField("Rating", Enums.serializedName(channel.audience), true)

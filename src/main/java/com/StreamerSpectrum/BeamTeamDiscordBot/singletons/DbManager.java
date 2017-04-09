@@ -110,7 +110,11 @@ public abstract class DbManager {
 			StringBuilder whereBuilder = new StringBuilder(" WHERE ");
 
 			for (String key : where.keySet()) {
-				whereBuilder.append(String.format("%s = ? AND ", key));
+				if (StringUtils.contains(where.get(key).toString(), "NULL")) {
+					whereBuilder.append(String.format("%s %s AND", key, where.get(key)));
+				} else {
+					whereBuilder.append(String.format("%s = ? AND ", key));
+				}
 			}
 
 			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
@@ -127,7 +131,9 @@ public abstract class DbManager {
 			if (null != where && !where.isEmpty()) {
 				int i = 1;
 				for (String key : where.keySet()) {
-					statement.setObject(i++, where.get(key));
+					if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
+						statement.setObject(i++, where.get(key));
+					}
 				}
 			}
 
@@ -182,7 +188,11 @@ public abstract class DbManager {
 			StringBuilder whereBuilder = new StringBuilder(" WHERE ");
 
 			for (String key : where.keySet()) {
-				whereBuilder.append(String.format("%s = ? AND ", key));
+				if (StringUtils.contains(where.get(key).toString(), "NULL")) {
+					whereBuilder.append(String.format("%s %s AND", key, where.get(key)));
+				} else {
+					whereBuilder.append(String.format("%s = ? AND ", key));
+				}
 			}
 
 			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
@@ -203,7 +213,9 @@ public abstract class DbManager {
 
 			if (null != where && !where.isEmpty()) {
 				for (String key : where.keySet()) {
-					statement.setObject(i++, where.get(key));
+					if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
+						statement.setObject(i++, where.get(key));
+					}
 				}
 			}
 
@@ -226,7 +238,11 @@ public abstract class DbManager {
 			StringBuilder whereBuilder = new StringBuilder(" WHERE ");
 
 			for (String key : where.keySet()) {
-				whereBuilder.append(String.format("%s = ? AND ", key));
+				if (StringUtils.contains(where.get(key).toString(), "NULL")) {
+					whereBuilder.append(String.format("%s %s AND", key, where.get(key)));
+				} else {
+					whereBuilder.append(String.format("%s = ? AND ", key));
+				}
 			}
 
 			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
@@ -243,7 +259,9 @@ public abstract class DbManager {
 			if (null != where && !where.isEmpty()) {
 				int i = 1;
 				for (String key : where.keySet()) {
-					statement.setObject(i++, where.get(key));
+					if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
+						statement.setObject(i++, where.get(key));
+					}
 				}
 			}
 
@@ -452,10 +470,11 @@ public abstract class DbManager {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 		Map<String, Object> where = new HashMap<>();
 
-		where.put(String.format("%s.%s = %d", Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_TEAMID), teamID);
+		where.put(String.format("%s.%s", Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_TEAMID), teamID);
 
 		if (requireGoLive) {
-			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID), "NOT NULL");
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID),
+					"IS NOT NULL");
 		}
 
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,
@@ -547,7 +566,8 @@ public abstract class DbManager {
 				channelID);
 
 		if (requireGoLive) {
-			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID), "NOT NULL");
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID),
+					"IS NOT NULL");
 		}
 
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,
@@ -610,8 +630,7 @@ public abstract class DbManager {
 		where.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID);
 
 		List<List<String>> valueLists = read(
-				Constants.TABLE_GOLIVEMESSAGES, new String[] { Constants.GOLIVEMESSAGES_COL_ID,
-						Constants.GOLIVEMESSAGES_COL_GUILDID, Constants.GOLIVEMESSAGES_COL_GOLIVECHANNELID },
+				Constants.TABLE_GOLIVEMESSAGES, null,
 				null, where);
 
 		for (List<String> values : valueLists) {
