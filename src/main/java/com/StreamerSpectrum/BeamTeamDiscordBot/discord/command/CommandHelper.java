@@ -95,10 +95,12 @@ public abstract class CommandHelper {
 	}
 
 	public static void sendPaginationDM(CommandEvent event, String[] listItems, int numCols, String title) {
+		sendPaginationDM(event, buildPagination(event, listItems, numCols, title));
 	}
 
 	public static void sendPaginationDM(CommandEvent event, String[] listItems, int numCols, String format,
 			Object... args) {
+		sendPaginationDM(event, buildPagination(event, listItems, numCols, format, args));
 	}
 
 	public static void sendPaginationDM(CommandEvent event, PaginatorBuilder builder) {

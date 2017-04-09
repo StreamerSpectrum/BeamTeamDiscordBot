@@ -187,15 +187,19 @@ public abstract class JDAManager {
 		return user.getPrivateChannel();
 	}
 
+	public static void sendDM(CommandEvent event, Message msg) {
 		getPrivateChannel(event.getAuthor()).sendMessage(msg);
 	}
 
+	public static void sendDM(CommandEvent event, MessageEmbed embed) {
 		getPrivateChannel(event.getAuthor()).sendMessage(embed);
 	}
 
+	public static void sendDM(CommandEvent event, String text) {
 		getPrivateChannel(event.getAuthor()).sendMessage(text);
 	}
 
+	public static void sendDM(CommandEvent event, String format, Object... args) {
 		getPrivateChannel(event.getAuthor()).sendMessage(format, args);
 	}
 
