@@ -205,16 +205,8 @@ public abstract class ConstellationManager {
 							System.out.println(String.format("%s is now live!", channel.user.username));
 
 							for (BTBGuild guild : guilds) {
-								String messageID = JDAManager.sendMessage(guild.getGoLiveChannelID(),
-										JDAManager.buildGoLiveEmbed(channel));
-								try {
-									DbManager.createGoLiveMessage(new GoLiveMessage(messageID,
-											guild.getGoLiveChannelID(), guild.getID(), channel.id));
-								} catch (SQLException e) {
-									// TODO Auto-generated catch
-									// block
-									e.printStackTrace();
-								}
+								JDAManager.sendGoLiveMessage(guild.getGoLiveChannelID(),
+										JDAManager.buildGoLiveEmbed(channel), channel);
 							}
 						} else {
 							System.out.println(String.format("%s is now offline!", channel.user.username));

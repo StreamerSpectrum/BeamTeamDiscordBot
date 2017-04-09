@@ -629,9 +629,7 @@ public abstract class DbManager {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID);
 
-		List<List<String>> valueLists = read(
-				Constants.TABLE_GOLIVEMESSAGES, null,
-				null, where);
+		List<List<String>> valueLists = read(Constants.TABLE_GOLIVEMESSAGES, null, null, where);
 
 		for (List<String> values : valueLists) {
 			messages.add(new GoLiveMessage(values.get(0), values.get(1), Long.parseLong(values.get(2)),

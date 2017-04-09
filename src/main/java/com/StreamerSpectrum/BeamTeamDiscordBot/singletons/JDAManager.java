@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Random;
+import java.util.function.Consumer;
 
 import javax.security.auth.login.LoginException;
 
@@ -22,6 +24,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBListener;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberInfo;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberList;
@@ -60,7 +63,7 @@ public abstract class JDAManager {
 
 				jda = new JDABuilder(AccountType.BOT).setToken(botToken).setStatus(OnlineStatus.DO_NOT_DISTURB)
 						.setGame(Game.of("loading...")).addListener(getWaiter()).addListener(getCommandClient())
-						.buildAsync();
+						.addListener(new BTBListener()).buildAsync();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -94,52 +97,70 @@ public abstract class JDAManager {
 		return waiter;
 	}
 
-	public static String sendMessage(String channelID, Message msg) {
+	public static void sendGoLiveMessage(String channelID, MessageEmbed embed, BTBBeamChannel channel) {
 		try {
-			return getJDA().getTextChannelById(channelID).sendMessage(msg).complete().getId();
-		} catch (IllegalArgumentException | RateLimitedException e) {
-			return null;
+			getJDA().getTextChannelById(channelID).sendMessage(embed).queue(new Consumer<Message>() {
+
+				@Override
+				public void accept(Message t) {
+					try {
+						DbManager.createGoLiveMessage(new GoLiveMessage(t.getId(), t.getChannel().getId(),
+								Long.parseLong(t.getGuild().getId()), channel.id));
+					} catch (SQLException e) {
+						// TODO Auto-generated catch
+						// block
+						e.printStackTrace();
+					}
+
+				}
+			});
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RateLimitedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
-	public static String sendMessage(String channelID, MessageEmbed embed) {
+	public static void sendMessage(String channelID, Message msg) {
 		try {
-			return getJDA().getTextChannelById(channelID).sendMessage(embed).complete().getId();
-		} catch (IllegalArgumentException | RateLimitedException e) {
-			return null;
-		}
+			getJDA().getTextChannelById(channelID).sendMessage(msg).queue();
+		} catch (IllegalArgumentException | RateLimitedException e) {}
 	}
 
-	public static String sendMessage(String channelID, String text) {
+	public static void sendMessage(String channelID, MessageEmbed embed) {
 		try {
-			return getJDA().getTextChannelById(channelID).sendMessage(text).complete().getId();
-		} catch (IllegalArgumentException | RateLimitedException e) {
-			return null;
-		}
+			getJDA().getTextChannelById(channelID).sendMessage(embed).queue();
+		} catch (IllegalArgumentException | RateLimitedException e) {}
 	}
 
-	public static String sendMessage(String channelID, String format, Object... args) {
+	public static void sendMessage(String channelID, String text) {
 		try {
-			return getJDA().getTextChannelById(channelID).sendMessage(format, args).complete().getId();
-		} catch (IllegalArgumentException | RateLimitedException e) {
-			return null;
-		}
+			getJDA().getTextChannelById(channelID).sendMessage(text).queue();
+		} catch (IllegalArgumentException | RateLimitedException e) {}
 	}
 
-	public static String sendMessage(CommandEvent event, Message msg) {
-		return sendMessage(event.getChannel().getId(), msg);
+	public static void sendMessage(String channelID, String format, Object... args) {
+		try {
+			getJDA().getTextChannelById(channelID).sendMessage(format, args).queue();
+		} catch (IllegalArgumentException | RateLimitedException e) {}
 	}
 
-	public static String sendMessage(CommandEvent event, MessageEmbed embed) {
-		return sendMessage(event.getChannel().getId(), embed);
+	public static void sendMessage(CommandEvent event, Message msg) {
+		sendMessage(event.getChannel().getId(), msg);
 	}
 
-	public static String sendMessage(CommandEvent event, String text) {
-		return sendMessage(event.getChannel().getId(), text);
+	public static void sendMessage(CommandEvent event, MessageEmbed embed) {
+		sendMessage(event.getChannel().getId(), embed);
 	}
 
-	public static String sendMessage(CommandEvent event, String format, Object... args) {
-		return sendMessage(event.getChannel().getId(), format, args);
+	public static void sendMessage(CommandEvent event, String text) {
+		sendMessage(event.getChannel().getId(), text);
+	}
+
+	public static void sendMessage(CommandEvent event, String format, Object... args) {
+		sendMessage(event.getChannel().getId(), format, args);
 	}
 
 	public static void deleteMessage(GoLiveMessage message) {
