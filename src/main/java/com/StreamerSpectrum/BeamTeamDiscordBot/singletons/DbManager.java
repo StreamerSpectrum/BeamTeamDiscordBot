@@ -97,7 +97,7 @@ public abstract class DbManager {
 				}
 			}
 		}
-		
+
 		StringBuilder sql = new StringBuilder();
 		sql.append(String.format("SELECT %s FROM %s",
 				cols.length() > 0 ? cols.substring(0, cols.lastIndexOf(",")) : "*", tableName));
@@ -627,5 +627,9 @@ public abstract class DbManager {
 		where.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID);
 
 		return delete(Constants.TABLE_GOLIVEMESSAGES, where);
+	}
+
+	public static int readVersion() throws SQLException {
+		return Integer.parseInt(read(Constants.TABLE_VERSION, new String[] { "ID" }, null, null).get(0).get(0));
 	}
 }

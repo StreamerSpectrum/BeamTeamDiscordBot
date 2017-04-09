@@ -8,6 +8,7 @@ public abstract class Constants {
 	public static final String	TABLE_TEAMS										= "Teams";
 	public static final String	TABLE_TRACKEDCHANNELS							= "TrackedChannels";
 	public static final String	TABLE_TRACKEDTEAMS								= "TrackedTeams";
+	public static final String	TABLE_VERSION									= "Version";
 
 	// Database Columns
 	public static final String	CHANNELS_COL_ID									= "ID";
