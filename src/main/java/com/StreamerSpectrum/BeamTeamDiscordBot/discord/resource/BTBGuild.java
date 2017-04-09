@@ -17,14 +17,17 @@ public class BTBGuild {
 	private final long	id;
 	private final int	shardID;
 
-	private String		goLiveChannelID			= null;
-	private String		logChannelID			= null;
+	private String		name;
+	private String		goLiveChannelID						= null;
+	private String		logChannelID						= null;
 
 	private boolean		removeOfflineChannelAnnouncements	= false;
 
-	public BTBGuild(long id, int shardID, String goLiveChannelID, String logChannelID, boolean removeOfflineChannels) {
+	public BTBGuild(long id, int shardID, String name, String goLiveChannelID, String logChannelID,
+			boolean removeOfflineChannels) {
 		this.id = id;
 		this.shardID = shardID;
+		this.name = name;
 		this.goLiveChannelID = goLiveChannelID;
 		this.logChannelID = logChannelID;
 		this.removeOfflineChannelAnnouncements = removeOfflineChannels;
@@ -46,6 +49,16 @@ public class BTBGuild {
 
 	public int getShardID() {
 		return shardID;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+
+		update();
 	}
 
 	public String getGoLiveChannelID() {
@@ -90,10 +103,12 @@ public class BTBGuild {
 	public Map<String, Object> getDbValues() {
 		Map<String, Object> values = new HashMap<>();
 
-		values.put(Constants.GUILDS_COL_ID, id);
+		values.put(Constants.GUILDS_COL_ID, getID());
+		values.put(Constants.GUILDS_COL_NAME, getName());
 		values.put(Constants.GUILDS_COL_GOLIVECHANNELID, getGoLiveChannelID());
 		values.put(Constants.GUILDS_COL_LOGCHANNELID, getLogChannelID());
-		values.put(Constants.GUILDS_COL_REMOVEOFFLINECHANNELANNOUNCEMENTS, isRemoveOfflineChannelAnnouncements() ? 1 : 0);
+		values.put(Constants.GUILDS_COL_REMOVEOFFLINECHANNELANNOUNCEMENTS,
+				isRemoveOfflineChannelAnnouncements() ? 1 : 0);
 
 		return values;
 	}

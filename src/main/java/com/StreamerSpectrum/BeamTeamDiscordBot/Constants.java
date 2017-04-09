@@ -21,6 +21,7 @@ public abstract class Constants {
 	public static final String	GOLIVEMESSAGES_COL_BEAMCHANNELID				= "BeamChannelID";
 
 	public static final String	GUILDS_COL_ID									= "ID";
+	public static final String	GUILDS_COL_NAME									= "Name";
 	public static final String	GUILDS_COL_GOLIVECHANNELID						= "GoLiveChannelID";
 	public static final String	GUILDS_COL_LOGCHANNELID							= "LogChannelID";
 	public static final String	GUILDS_COL_REMOVEOFFLINECHANNELANNOUNCEMENTS	= "RemoveOfflineChannels";

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -56,26 +57,26 @@ public abstract class DbManager {
 			return false;
 		}
 
-		Statement statement = null;
+		PreparedStatement statement = null;
 
 		StringBuilder columns = new StringBuilder();
 		StringBuilder vals = new StringBuilder();
 		for (String key : values.keySet()) {
 			columns.append(key).append(", ");
-
-			if (values.get(key) == null) {
-				vals.append("null, ");
-			} else {
-				vals.append(String.format("'%s', ", values.get(key)));
-			}
+			vals.append("?, ");
 		}
 
 		try {
-			statement = getConnection().createStatement();
+			statement = getConnection().prepareStatement(String.format("INSERT INTO %s (%s) VALUES (%s);", tableName,
+					columns.substring(0, columns.lastIndexOf(",")), vals.substring(0, vals.lastIndexOf(","))));
 			statement.setQueryTimeout(30);
 
-			return statement.executeUpdate(String.format("INSERT INTO %s (%s) VALUES (%s);", tableName,
-					columns.substring(0, columns.lastIndexOf(",")), vals.substring(0, vals.lastIndexOf(",")))) > 0;
+			int i = 1;
+			for (String key : values.keySet()) {
+				statement.setObject(i++, values.get(key));
+			}
+
+			return statement.executeUpdate() > 0;
 		} finally {
 			if (null != statement) {
 				statement.close();
@@ -222,7 +223,7 @@ public abstract class DbManager {
 
 		if (!values.isEmpty()) {
 			guild = new BTBGuild(id, GuildManager.getShardID(id), values.get(0).get(1), values.get(0).get(2),
-					"1".equals((values.get(0).get(3))));
+					values.get(0).get(3), "1".equals((values.get(0).get(4))));
 		}
 
 		return guild;
@@ -235,7 +236,7 @@ public abstract class DbManager {
 		for (List<String> values : valuesList) {
 			guilds.add(
 					new BTBGuild(Long.parseLong(values.get(0)), GuildManager.getShardID(Long.parseLong(values.get(0))),
-							values.get(1), values.get(2), "1".equals((values.get(3)))));
+							values.get(1), values.get(2), values.get(3), "1".equals((values.get(4)))));
 		}
 
 		return guilds;
@@ -396,8 +397,8 @@ public abstract class DbManager {
 
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
-					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2),
-					"1".equals(values.get(3)));
+					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2), values.get(3),
+					"1".equals(values.get(4)));
 
 			guilds.add(guild);
 		}
@@ -463,8 +464,8 @@ public abstract class DbManager {
 
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
-					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2),
-					"1".equals(values.get(3)));
+					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2), values.get(3),
+					"1".equals(values.get(4)));
 
 			guilds.add(guild);
 		}
