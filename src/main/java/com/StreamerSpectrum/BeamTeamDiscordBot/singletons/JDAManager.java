@@ -147,12 +147,12 @@ public abstract class JDAManager {
 	}
 
 	public static void deleteMessage(GoLiveMessage message) {
-		deleteMessage(message.getMessageID(), Long.toString(message.getGuildID()), message.getGoLiveChannelID());
+		deleteMessage(message.getMessageID(), message.getGoLiveChannelID());
 	}
 
-	public static void deleteMessage(String messageID, String guildID, String goLiveChannelID) {
+	public static void deleteMessage(String messageID, String goLiveChannelID) {
 		try {
-			getJDA().getGuildById(guildID).getTextChannelById(goLiveChannelID).deleteMessageById(messageID).queue();
+			getJDA().getTextChannelById(goLiveChannelID).deleteMessageById(messageID).queue();
 		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
