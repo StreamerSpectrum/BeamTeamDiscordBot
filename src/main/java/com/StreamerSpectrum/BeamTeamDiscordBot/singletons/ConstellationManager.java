@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +22,6 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 import com.google.gson.JsonObject;
 
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import pro.beam.api.resource.constellation.events.EventHandler;
 import pro.beam.api.resource.constellation.events.LiveEvent;
 import pro.beam.api.resource.constellation.methods.LiveSubscribeMethod;
@@ -37,7 +35,7 @@ public abstract class ConstellationManager {
 
 	private static BeamConstellationConnectable connectable;
 
-	private static void init() throws SQLException {
+	private static void init() {
 		handleEvents();
 
 		subscribeToAnnouncements();
@@ -64,12 +62,7 @@ public abstract class ConstellationManager {
 
 			connectable.connect();
 
-			try {
-				init();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			init();
 		}
 
 		return connectable;
@@ -82,10 +75,7 @@ public abstract class ConstellationManager {
 			getConnectable().disconnect();
 			try {
 				TimeUnit.SECONDS.sleep(1);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			} catch (InterruptedException ignore) {}
 		}
 	}
 
@@ -173,76 +163,51 @@ public abstract class ConstellationManager {
 	}
 
 	private static void handleChannelUpdate(LiveEvent event, JsonObject payload) {
-		try {
-			if (payload.has("online")) {
-				BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
+		if (payload.has("online")) {
+			BTBBeamChannel channel = BeamManager.getChannel(getIDFromEvent(event.data.channel));
 
-				if (null != channel) {
-					Set<BTBGuild> guilds = new HashSet<>();
+			if (null != channel) {
+				Set<BTBGuild> guilds = new HashSet<>();
 
-					try {
-						List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
+				List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
 
-						for (TeamMembershipExpanded team : userTeams) {
-							guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true));
-						}
+				for (TeamMembershipExpanded team : userTeams) {
+					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true));
+				}
 
-						guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
+				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
 
-						// TODO: Check if this channel/channel's
-						// user is
-						// following a channel in a guild's tracked
-						// follows
-						// (get
-						// all guilds in the db that are tracking
-						// anyone
-						// this channel/user is following)
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+				if (!guilds.isEmpty()) {
+					if (payload.get("online").getAsBoolean()) {
+						System.out.println(String.format("%s is now live!", channel.user.username));
 
-					if (!guilds.isEmpty()) {
-						if (payload.get("online").getAsBoolean()) {
-							System.out.println(String.format("%s is now live!", channel.user.username));
-
-							for (BTBGuild guild : guilds) {
-								JDAManager.sendGoLiveMessage(guild.getGoLiveChannelID(),
-										JDAManager.buildGoLiveEmbed(channel), channel);
-							}
-						} else {
-							System.out.println(String.format("%s is now offline!", channel.user.username));
-
-							List<GoLiveMessage> messagesList = new ArrayList<>();
-
-							try {
-								messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
-
-								for (GoLiveMessage message : messagesList) {
-									if (DbManager.readGuild(message.getGuildID())
-											.isRemoveOfflineChannelAnnouncements()) {
-										JDAManager.deleteMessage(message);
-									}
-								}
-
-								DbManager.deleteGoLiveMessagesForChannel(channel.id);
-							} catch (SQLException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
+						for (BTBGuild guild : guilds) {
+							JDAManager.sendGoLiveMessage(guild.getGoLiveChannelID(),
+									JDAManager.buildGoLiveEmbed(channel), channel);
 						}
 					} else {
-						System.out.println(String.format("No one is tracking %s's channel.", channel.user.username));
-						unsubscribeFromEvent(event.data.channel);
+						System.out.println(String.format("%s is now offline!", channel.user.username));
+
+						List<GoLiveMessage> messagesList = new ArrayList<>();
+
+						messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
+
+						for (GoLiveMessage message : messagesList) {
+							if (DbManager.readGuild(message.getGuildID()).isRemoveOfflineChannelAnnouncements()) {
+								JDAManager.deleteMessage(message);
+							}
+						}
+
+						DbManager.deleteGoLiveMessagesForChannel(channel.id);
 					}
 				} else {
-					System.out.println(String.format("Unable to retrieve channel info for channel id %d",
-							getIDFromEvent(event.data.channel)));
+					System.out.println(String.format("No one is tracking %s's channel.", channel.user.username));
+					unsubscribeFromEvent(event.data.channel);
 				}
+			} else {
+				System.out.println(String.format("Unable to retrieve channel info for channel id %d",
+						getIDFromEvent(event.data.channel)));
 			}
-		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 
@@ -268,16 +233,8 @@ public abstract class ConstellationManager {
 		// channels
 
 		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
-			try {
-				JDAManager.giveTeamRoleToUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
-						.getUserForDiscordTag(payload.get("social").getAsJsonObject().get("discord").getAsString()));
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (RateLimitedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			JDAManager.giveTeamRoleToUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
+					.getUserForDiscordTag(payload.get("social").getAsJsonObject().get("discord").getAsString()));
 		}
 
 		subscribeToChannel(BeamManager.getUser(payload.get("id").getAsInt()).channel);
@@ -307,16 +264,9 @@ public abstract class ConstellationManager {
 		// channels
 
 		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
-			try {
-				JDAManager.removeTeamRoleFromUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
-						.getUserForDiscordTag(payload.get("social").getAsJsonObject().get("discord").getAsString()));
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (RateLimitedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			JDAManager.removeTeamRoleFromUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
+					.getUserForDiscordTag(payload.get("social").getAsJsonObject().get("discord").getAsString()));
+
 		}
 	}
 

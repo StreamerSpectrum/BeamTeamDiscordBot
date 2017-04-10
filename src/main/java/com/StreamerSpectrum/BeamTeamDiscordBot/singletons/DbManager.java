@@ -55,7 +55,7 @@ public abstract class DbManager {
 
 	private static void updateDb() {}
 
-	private static boolean create(String tableName, Map<String, Object> values) throws SQLException {
+	private static boolean create(String tableName, Map<String, Object> values) {
 		if (StringUtils.isBlank(tableName)) {
 			return false;
 		}
@@ -70,25 +70,33 @@ public abstract class DbManager {
 		PreparedStatement statement = null;
 
 		try {
-			statement = getConnection().prepareStatement(String.format("INSERT INTO %s (%s) VALUES (%s);", tableName,
-					columns.substring(0, columns.lastIndexOf(",")), vals.substring(0, vals.lastIndexOf(","))));
-			statement.setQueryTimeout(30);
+			try {
+				statement = getConnection().prepareStatement(String.format("INSERT INTO %s (%s) VALUES (%s);",
+						tableName, columns.substring(0, columns.lastIndexOf(",")),
+						vals.substring(0, vals.lastIndexOf(","))));
+				statement.setQueryTimeout(30);
 
-			int i = 1;
-			for (String key : values.keySet()) {
-				statement.setObject(i++, values.get(key));
-			}
+				int i = 1;
+				for (String key : values.keySet()) {
+					statement.setObject(i++, values.get(key));
+				}
 
-			return statement.executeUpdate() > 0;
-		} finally {
-			if (null != statement) {
-				statement.close();
+				return statement.executeUpdate() > 0;
+			} finally {
+				if (null != statement) {
+					statement.close();
+				}
 			}
+		} catch (SQLException e) {
+			// TODO: Auto-generated catch block
+			e.printStackTrace();
 		}
+
+		return false;
 	}
 
 	private static List<List<String>> read(String tableName, String[] columns, String innerJoin,
-			Map<String, Object> where) throws SQLException {
+			Map<String, Object> where) {
 		if (StringUtils.isBlank(tableName)) {
 			return new ArrayList<>();
 		}
@@ -129,53 +137,59 @@ public abstract class DbManager {
 		PreparedStatement statement = null;
 
 		try {
-			statement = getConnection().prepareStatement(sql.toString());
-			statement.setQueryTimeout(30);
+			try {
+				statement = getConnection().prepareStatement(sql.toString());
+				statement.setQueryTimeout(30);
 
-			if (null != where && !where.isEmpty()) {
-				int i = 1;
-				for (String key : where.keySet()) {
-					if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
-						statement.setObject(i++, where.get(key));
-					}
-				}
-			}
-
-			ResultSet rs = statement.executeQuery();
-			List<List<String>> values = new ArrayList<>();
-
-			while (rs.next()) {
-				List<String> vals = new ArrayList<>();
-
-				if (null != columns && columns.length > 0) {
-					for (String columnName : columns) {
-						vals.add(rs.getString(rs.findColumn(columnName)));
-					}
-				} else {
+				if (null != where && !where.isEmpty()) {
 					int i = 1;
-
-					while (true) {
-						try {
-							vals.add(rs.getString(i++));
-						} catch (SQLException e) {
-							break;
+					for (String key : where.keySet()) {
+						if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
+							statement.setObject(i++, where.get(key));
 						}
 					}
 				}
 
-				values.add(vals);
-			}
+				ResultSet rs = statement.executeQuery();
+				List<List<String>> values = new ArrayList<>();
 
-			return values;
-		} finally {
-			if (null != statement) {
-				statement.close();
+				while (rs.next()) {
+					List<String> vals = new ArrayList<>();
+
+					if (null != columns && columns.length > 0) {
+						for (String columnName : columns) {
+							vals.add(rs.getString(columnName));
+						}
+					} else {
+						int i = 1;
+
+						while (true) {
+							try {
+								vals.add(rs.getString(i++));
+							} catch (SQLException e) {
+								break;
+							}
+						}
+					}
+
+					values.add(vals);
+				}
+
+				return values;
+			} finally {
+				if (null != statement) {
+					statement.close();
+				}
 			}
+		} catch (SQLException e) {
+			// TODO: Auto-generated catch block
+			e.printStackTrace();
 		}
+
+		return new ArrayList<>();
 	}
 
-	private static boolean update(String tableName, Map<String, Object> newVals, Map<String, Object> where)
-			throws SQLException {
+	private static boolean update(String tableName, Map<String, Object> newVals, Map<String, Object> where) {
 		if (StringUtils.isBlank(tableName) || null == newVals || newVals.isEmpty()) {
 			return false;
 		}
@@ -207,31 +221,38 @@ public abstract class DbManager {
 		PreparedStatement statement = null;
 
 		try {
-			statement = getConnection().prepareStatement(sql.toString());
-			statement.setQueryTimeout(30);
+			try {
+				statement = getConnection().prepareStatement(sql.toString());
+				statement.setQueryTimeout(30);
 
-			int i = 1;
-			for (String key : newVals.keySet()) {
-				statement.setObject(i++, newVals.get(key));
-			}
+				int i = 1;
+				for (String key : newVals.keySet()) {
+					statement.setObject(i++, newVals.get(key));
+				}
 
-			if (null != where && !where.isEmpty()) {
-				for (String key : where.keySet()) {
-					if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
-						statement.setObject(i++, where.get(key));
+				if (null != where && !where.isEmpty()) {
+					for (String key : where.keySet()) {
+						if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
+							statement.setObject(i++, where.get(key));
+						}
 					}
 				}
-			}
 
-			return statement.executeUpdate() > 0;
-		} finally {
-			if (null != statement) {
-				statement.close();
+				return statement.executeUpdate() > 0;
+			} finally {
+				if (null != statement) {
+					statement.close();
+				}
 			}
+		} catch (SQLException e) {
+			// TODO: Auto-generated catch block
+			e.printStackTrace();
 		}
+
+		return false;
 	}
 
-	private static boolean delete(String tableName, Map<String, Object> where) throws SQLException {
+	private static boolean delete(String tableName, Map<String, Object> where) {
 		if (StringUtils.isBlank(tableName)) {
 			return false;
 		}
@@ -257,36 +278,43 @@ public abstract class DbManager {
 		PreparedStatement statement = null;
 
 		try {
-			statement = getConnection().prepareStatement(sql.toString());
-			statement.setQueryTimeout(30);
+			try {
+				statement = getConnection().prepareStatement(sql.toString());
+				statement.setQueryTimeout(30);
 
-			if (null != where && !where.isEmpty()) {
-				int i = 1;
-				for (String key : where.keySet()) {
-					if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
-						statement.setObject(i++, where.get(key));
+				if (null != where && !where.isEmpty()) {
+					int i = 1;
+					for (String key : where.keySet()) {
+						if (!StringUtils.contains(where.get(key).toString(), "NULL")) {
+							statement.setObject(i++, where.get(key));
+						}
 					}
 				}
-			}
 
-			return statement.executeUpdate() > 0;
+				return statement.executeUpdate() > 0;
 
-		} finally {
-			if (null != statement) {
-				statement.close();
+			} finally {
+				if (null != statement) {
+					statement.close();
+				}
 			}
+		} catch (SQLException e) {
+			// TODO: Auto-generated catch block
+			e.printStackTrace();
 		}
+
+		return false;
 	}
 
-	public static int readVersion() throws SQLException {
+	public static int readVersion() {
 		return Integer.parseInt(read(Constants.TABLE_VERSION, new String[] { "ID" }, null, null).get(0).get(0));
 	}
 
-	public static boolean createGuild(BTBGuild guild) throws SQLException {
+	public static boolean createGuild(BTBGuild guild) {
 		return create(Constants.TABLE_GUILDS, guild.getDbValues());
 	}
 
-	public static BTBGuild readGuild(long id) throws SQLException {
+	public static BTBGuild readGuild(long id) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.GUILDS_COL_ID, id);
 
@@ -302,7 +330,7 @@ public abstract class DbManager {
 		return guild;
 	}
 
-	public static List<BTBGuild> readAllGuilds() throws SQLException {
+	public static List<BTBGuild> readAllGuilds() {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 		List<List<String>> valuesList = read(Constants.TABLE_GUILDS, null, null, null);
 
@@ -315,25 +343,25 @@ public abstract class DbManager {
 		return guilds;
 	}
 
-	public static boolean updateGuild(BTBGuild guild) throws SQLException {
+	public static boolean updateGuild(BTBGuild guild) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.GUILDS_COL_ID, guild.getID());
 
 		return update(Constants.TABLE_GUILDS, guild.getDbValues(), where);
 	}
 
-	public static boolean deleteGuild(long id) throws SQLException {
+	public static boolean deleteGuild(long id) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.GUILDS_COL_ID, id);
 
 		return delete(Constants.TABLE_GUILDS, where);
 	}
 
-	public static boolean createChannel(BTBBeamChannel channel) throws SQLException {
+	public static boolean createChannel(BTBBeamChannel channel) {
 		return create(Constants.TABLE_CHANNELS, channel.getDbValues());
 	}
 
-	public static BTBBeamChannel readChannel(int id) throws SQLException {
+	public static BTBBeamChannel readChannel(int id) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.CHANNELS_COL_ID, id);
 
@@ -354,7 +382,7 @@ public abstract class DbManager {
 		return channel;
 	}
 
-	public static List<BTBBeamChannel> readAllChannels() throws SQLException {
+	public static List<BTBBeamChannel> readAllChannels() {
 		List<BTBBeamChannel> channels = new ArrayList<BTBBeamChannel>();
 		List<List<String>> valuesList = read(Constants.TABLE_CHANNELS, null, null, null);
 
@@ -373,25 +401,25 @@ public abstract class DbManager {
 		return channels;
 	}
 
-	public static boolean updateChannel(BTBBeamChannel channel) throws SQLException {
+	public static boolean updateChannel(BTBBeamChannel channel) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.CHANNELS_COL_ID, channel.id);
 
 		return update(Constants.TABLE_CHANNELS, channel.getDbValues(), where);
 	}
 
-	public static boolean deleteChannel(int id) throws SQLException {
+	public static boolean deleteChannel(int id) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.CHANNELS_COL_ID, id);
 
 		return delete(Constants.TABLE_CHANNELS, where);
 	}
 
-	public static boolean createTeam(BeamTeam team) throws SQLException {
+	public static boolean createTeam(BeamTeam team) {
 		return create(Constants.TABLE_TEAMS, team.getDbValues());
 	}
 
-	public static BeamTeam readTeam(int id) throws SQLException {
+	public static BeamTeam readTeam(int id) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TEAMS_COL_ID, id);
 
@@ -410,7 +438,7 @@ public abstract class DbManager {
 		return team;
 	}
 
-	public static List<BeamTeam> readAllTeams() throws SQLException {
+	public static List<BeamTeam> readAllTeams() {
 		List<BeamTeam> teams = new ArrayList<BeamTeam>();
 		List<List<String>> valuesList = read(Constants.TABLE_TEAMS, null, null, null);
 
@@ -427,21 +455,21 @@ public abstract class DbManager {
 		return teams;
 	}
 
-	public static boolean updateTeam(BeamTeam team) throws SQLException {
+	public static boolean updateTeam(BeamTeam team) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TEAMS_COL_ID, team.id);
 
 		return update(Constants.TABLE_TEAMS, team.getDbValues(), where);
 	}
 
-	public static boolean deleteTeam(int id) throws SQLException {
+	public static boolean deleteTeam(int id) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TEAMS_COL_ID, id);
 
 		return delete(Constants.TABLE_TEAMS, where);
 	}
 
-	public static boolean createTrackedTeam(long guildID, int teamID) throws SQLException {
+	public static boolean createTrackedTeam(long guildID, int teamID) {
 		Map<String, Object> values = new HashMap<>();
 
 		values.put(Constants.TRACKEDTEAMS_COL_GUILDID, guildID);
@@ -450,7 +478,7 @@ public abstract class DbManager {
 		return create(Constants.TABLE_TRACKEDTEAMS, values);
 	}
 
-	public static List<BeamTeam> readTrackedTeamsForGuild(long guildID) throws SQLException {
+	public static List<BeamTeam> readTrackedTeamsForGuild(long guildID) {
 		List<BeamTeam> teams = new ArrayList<BeamTeam>();
 
 		Map<String, Object> where = new HashMap<>();
@@ -474,7 +502,7 @@ public abstract class DbManager {
 		return teams;
 	}
 
-	public static List<BTBGuild> readGuildsForTrackedTeam(int teamID, boolean requireGoLive) throws SQLException {
+	public static List<BTBGuild> readGuildsForTrackedTeam(int teamID, boolean requireGoLive) {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 		Map<String, Object> where = new HashMap<>();
 
@@ -501,7 +529,7 @@ public abstract class DbManager {
 		return guilds;
 	}
 
-	public static List<BeamTeam> readAllTrackedTeams() throws SQLException {
+	public static List<BeamTeam> readAllTrackedTeams() {
 		List<BeamTeam> teams = new ArrayList<>();
 
 		List<List<String>> valueLists = read(Constants.TABLE_TEAMS, null,
@@ -522,7 +550,7 @@ public abstract class DbManager {
 		return teams;
 	}
 
-	public static boolean deleteTrackedTeam(long guildID, int teamID) throws SQLException {
+	public static boolean deleteTrackedTeam(long guildID, int teamID) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TRACKEDTEAMS_COL_GUILDID, guildID);
 		where.put(Constants.TRACKEDTEAMS_COL_TEAMID, teamID);
@@ -530,7 +558,7 @@ public abstract class DbManager {
 		return delete(Constants.TABLE_TRACKEDTEAMS, where);
 	}
 
-	public static boolean createTrackedChannel(long guildID, int channelID) throws SQLException {
+	public static boolean createTrackedChannel(long guildID, int channelID) {
 		Map<String, Object> values = new HashMap<>();
 
 		values.put(Constants.TRACKEDCHANNELS_COL_GUILDID, guildID);
@@ -539,7 +567,7 @@ public abstract class DbManager {
 		return create(Constants.TABLE_TRACKEDCHANNELS, values);
 	}
 
-	public static List<BTBBeamChannel> readTrackedChannelsForGuild(long guildID) throws SQLException {
+	public static List<BTBBeamChannel> readTrackedChannelsForGuild(long guildID) {
 		List<BTBBeamChannel> channels = new ArrayList<BTBBeamChannel>();
 		Map<String, Object> where = new HashMap<>();
 		where.put(String.format("%s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TRACKEDCHANNELS_COL_GUILDID),
@@ -566,7 +594,7 @@ public abstract class DbManager {
 		return channels;
 	}
 
-	public static List<BTBGuild> readGuildsForTrackedChannel(int channelID, boolean requireGoLive) throws SQLException {
+	public static List<BTBGuild> readGuildsForTrackedChannel(int channelID, boolean requireGoLive) {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 
 		Map<String, Object> where = new HashMap<>();
@@ -595,7 +623,7 @@ public abstract class DbManager {
 		return guilds;
 	}
 
-	public static List<BTBBeamChannel> readAllTrackedChannels() throws SQLException {
+	public static List<BTBBeamChannel> readAllTrackedChannels() {
 		List<BTBBeamChannel> channels = new ArrayList<>();
 
 		List<List<String>> valueLists = read(Constants.TABLE_CHANNELS, null,
@@ -619,7 +647,7 @@ public abstract class DbManager {
 		return channels;
 	}
 
-	public static boolean deleteTrackedChannel(long guildID, int channelID) throws SQLException {
+	public static boolean deleteTrackedChannel(long guildID, int channelID) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TRACKEDCHANNELS_COL_GUILDID, guildID);
 		where.put(Constants.TRACKEDCHANNELS_COL_BEAMCHANNELID, channelID);
@@ -627,11 +655,11 @@ public abstract class DbManager {
 		return delete(Constants.TABLE_TRACKEDCHANNELS, where);
 	}
 
-	public static boolean createGoLiveMessage(GoLiveMessage message) throws SQLException {
+	public static boolean createGoLiveMessage(GoLiveMessage message) {
 		return create(Constants.TABLE_GOLIVEMESSAGES, message.getDbValues());
 	}
 
-	public static List<GoLiveMessage> readAllGoLiveMessagesForChannel(int channelID) throws SQLException {
+	public static List<GoLiveMessage> readAllGoLiveMessagesForChannel(int channelID) {
 		List<GoLiveMessage> messages = new ArrayList<>();
 
 		Map<String, Object> where = new HashMap<>();
@@ -647,18 +675,18 @@ public abstract class DbManager {
 		return messages;
 	}
 
-	public static boolean deleteGoLiveMessagesForChannel(int channelID) throws SQLException {
+	public static boolean deleteGoLiveMessagesForChannel(int channelID) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.GOLIVEMESSAGES_COL_BEAMCHANNELID, channelID);
 
 		return delete(Constants.TABLE_GOLIVEMESSAGES, where);
 	}
-	
-	public static boolean createTeamRole(BTBRole role) throws SQLException{
+
+	public static boolean createTeamRole(BTBRole role) {
 		return create(Constants.TABLE_TEAMROLES, role.getDbValues());
 	}
 
-	public static List<BTBRole> readTeamRolesForGuild(long guildID) throws SQLException {
+	public static List<BTBRole> readTeamRolesForGuild(long guildID) {
 		List<BTBRole> roles = new ArrayList<>();
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TEAMROLES_COL_GUILDID, guildID);
@@ -672,7 +700,7 @@ public abstract class DbManager {
 		return roles;
 	}
 
-	public static List<BTBRole> readTeamRolesForTeam(int teamID) throws SQLException {
+	public static List<BTBRole> readTeamRolesForTeam(int teamID) {
 		List<BTBRole> roles = new ArrayList<>();
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TEAMROLES_COL_TEAMID, teamID);
@@ -685,16 +713,16 @@ public abstract class DbManager {
 
 		return roles;
 	}
-	
-	public static boolean deleteTeamRole(BTBRole role) throws SQLException {		
+
+	public static boolean deleteTeamRole(BTBRole role) {
 		return delete(Constants.TABLE_TEAMROLES, role.getDbValues());
 	}
-	
-	public static boolean deleteTeamRole(long guildID, int teamID) throws SQLException {
+
+	public static boolean deleteTeamRole(long guildID, int teamID) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.TEAMROLES_COL_GUILDID, guildID);
 		where.put(Constants.TEAMROLES_COL_TEAMID, teamID);
-		
+
 		return delete(Constants.TABLE_TEAMROLES, where);
 	}
 }
