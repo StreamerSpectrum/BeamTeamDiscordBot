@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import com.StreamerSpectrum.BeamTeamDiscordBot.BTBMain;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
@@ -32,8 +33,9 @@ import pro.beam.api.resource.constellation.replies.ReplyHandler;
 import pro.beam.api.resource.constellation.ws.BeamConstellationConnectable;
 
 public abstract class ConstellationManager {
+	private final static Logger					logger	= Logger.getLogger(BTBMain.class.getName());
 
-	private static BeamConstellationConnectable connectable;
+	private static BeamConstellationConnectable	connectable;
 
 	private static void init() {
 		handleEvents();
@@ -122,7 +124,7 @@ public abstract class ConstellationManager {
 					}
 					break;
 					default:
-						System.out.println(String.format("Unknown event: %s\n%s", event.data.channel,
+						logger.log(Level.INFO, String.format("Unknown event: %s\n%s", event.data.channel,
 								event.data.payload.toString()));
 						try {
 							if (Files.notExists(Paths.get("payloads\\"))) {
@@ -179,14 +181,14 @@ public abstract class ConstellationManager {
 
 				if (!guilds.isEmpty()) {
 					if (payload.get("online").getAsBoolean()) {
-						System.out.println(String.format("%s is now live!", channel.user.username));
+						logger.log(Level.INFO, String.format("%s is now live!", channel.user.username));
 
 						for (BTBGuild guild : guilds) {
 							JDAManager.sendGoLiveMessage(guild.getGoLiveChannelID(),
 									JDAManager.buildGoLiveEmbed(channel), channel);
 						}
 					} else {
-						System.out.println(String.format("%s is now offline!", channel.user.username));
+						logger.log(Level.INFO, String.format("%s is now offline!", channel.user.username));
 
 						List<GoLiveMessage> messagesList = new ArrayList<>();
 
@@ -201,11 +203,11 @@ public abstract class ConstellationManager {
 						DbManager.deleteGoLiveMessagesForChannel(channel.id);
 					}
 				} else {
-					System.out.println(String.format("No one is tracking %s's channel.", channel.user.username));
+					logger.log(Level.INFO, String.format("No one is tracking %s's channel.", channel.user.username));
 					unsubscribeFromEvent(event.data.channel);
 				}
 			} else {
-				System.out.println(String.format("Unable to retrieve channel info for channel id %d",
+				logger.log(Level.INFO, String.format("Unable to retrieve channel info for channel id %d",
 						getIDFromEvent(event.data.channel)));
 			}
 		}
@@ -326,7 +328,7 @@ public abstract class ConstellationManager {
 	}
 
 	public static void subscribeToChannel(BTBBeamChannel channel) {
-		System.out.println(String.format("Subscribing to %s's channel.", channel.token));
+		logger.log(Level.INFO, String.format("Subscribing to %s's channel.", channel.token));
 
 		subscribeToEvent(String.format("channel:%d:update", channel.id));
 		subscribeToEvent(String.format("channel:%d:status", channel.id));
@@ -339,7 +341,7 @@ public abstract class ConstellationManager {
 	}
 
 	public static void subscribeToTeam(BeamTeam team) {
-		System.out.println(String.format("Subscribing to team \"%s\" and its members' channels.", team.name));
+		logger.log(Level.INFO, String.format("Subscribing to team \"%s\" and its members' channels.", team.name));
 		List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
 
 		for (BeamTeamUser member : teamMembers) {
@@ -369,7 +371,7 @@ public abstract class ConstellationManager {
 			@Override
 			public void onSuccess(LiveRequestReply result) {}
 		});
-		System.out.println(String.format("Successfully subscribed to %s", event));
+		logger.log(Level.INFO, String.format("Successfully subscribed to %s", event));
 	}
 
 	private static void unsubscribeFromEvent(String event) {
@@ -384,7 +386,7 @@ public abstract class ConstellationManager {
 			@Override
 			public void onSuccess(LiveRequestReply result) {}
 		});
-		System.out.println(String.format("Successfully unsubscribed from %s", event));
+		logger.log(Level.INFO, String.format("Successfully unsubscribed from %s", event));
 	}
 
 	private static int getIDFromEvent(String event) {

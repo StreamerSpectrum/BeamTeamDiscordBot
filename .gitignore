@@ -108,3 +108,4 @@ resources/config.txt
 payloads/
 schema.sql
 BeamTeamDiscordBot.bat
+*.lck
