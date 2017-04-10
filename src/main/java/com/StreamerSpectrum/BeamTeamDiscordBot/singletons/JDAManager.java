@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -24,11 +25,17 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.teamrole.TeamRoleDistribute;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.teamrole.TeamRoleList;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.teamrole.TeamRoleRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.teamrole.TeamRoleSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBListener;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBRole;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberInfo;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.MemberList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.FollowReport;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.PrimaryTeam;
@@ -43,6 +50,8 @@ import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.OnlineStatus;
 import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.PrivateChannel;
@@ -82,6 +91,7 @@ public abstract class JDAManager {
 					.addCommands(new TeamAdd(), new TeamRemove(), new TeamList(), new RandomMember(), new PrimaryTeam(),
 							new MemberInfo(), new FollowReport(), new MemberList(), new GoLiveSet(), new GoLiveRemove(),
 							new GoLiveDeleteOffline(), new ChannelAdd(), new ChannelRemove(), new ChannelList(),
+							new TeamRoleSet(), new TeamRoleRemove(), new TeamRoleList(), new TeamRoleDistribute(),
 							new RestartConstellation())
 					.build();
 		}
@@ -218,6 +228,98 @@ public abstract class JDAManager {
 
 	public static void sendDM(CommandEvent event, String format, Object... args) {
 		getPrivateChannel(event.getAuthor()).sendMessage(format, args);
+	}
+
+	public static void giveTeamRoleToUser(BTBRole role, User user) {
+		if (null != user) {
+			try {
+				Guild guild = getJDA().getGuildById(Long.toString(role.getGuildID()));
+				Member member = guild.getMember(user);
+
+				if (null != member) {
+					guild.getController().addRolesToMember(member, guild.getRoleById(role.getRoleID())).queue();
+				}
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (RateLimitedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static void giveTeamRoleToUserOnAllGuilds(int teamID, User user) {
+		try {
+			List<BTBRole> roles = DbManager.readTeamRolesForTeam(teamID);
+
+			for (BTBRole role : roles) {
+				giveTeamRoleToUser(role, user);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static void distributeTeamRoleToGuildTeamMembers(BTBRole role) {
+		try {
+			List<BeamTeamUser> members = BeamManager.getTeamMembers(role.getTeamID());
+
+			for (BeamTeamUser member : members) {
+				if (null != member.social && StringUtils.isNotBlank(member.social.discord)) {
+					giveTeamRoleToUser(role, getUserForDiscordTag(member.social.discord));
+				}
+			}
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RateLimitedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static void removeTeamRoleFromUser(BTBRole role, User user) {
+		try {
+			Guild guild = getJDA().getGuildById(Long.toString(role.getGuildID()));
+			Member member = guild.getMember(user);
+
+			if (null != member) {
+				guild.getController().removeRolesFromMember(member, guild.getRoleById(role.getRoleID())).queue();
+			}
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RateLimitedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static void removeTeamRoleFromUserOnAllGuilds(int teamID, User user) {
+		try {
+			List<BTBRole> roles = DbManager.readTeamRolesForTeam(teamID);
+
+			for (BTBRole role : roles) {
+				removeTeamRoleFromUser(role, user);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static User getUserForDiscordTag(String tag) throws IllegalArgumentException, RateLimitedException {
+		List<User> potentialUsers = getJDA().getUsersByName(tag.substring(0, tag.indexOf("#")), true);
+
+		for (User user : potentialUsers) {
+			if (StringUtils.contains(tag, user.getDiscriminator())) {
+				return user;
+			}
+		}
+
+		return null;
 	}
 
 }

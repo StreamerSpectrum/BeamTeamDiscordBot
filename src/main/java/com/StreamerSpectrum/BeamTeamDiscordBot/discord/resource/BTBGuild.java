@@ -206,4 +206,9 @@ public class BTBGuild {
 
 		return isDeleted;
 	}
+
+	public void addRole(String string, String string2) {
+		// TODO Auto-generated method stub
+		
+	}
 }

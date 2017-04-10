@@ -22,6 +22,8 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.TeamMembershipExpan
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 import com.google.gson.JsonObject;
+
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import pro.beam.api.resource.constellation.events.EventHandler;
 import pro.beam.api.resource.constellation.events.LiveEvent;
 import pro.beam.api.resource.constellation.methods.LiveSubscribeMethod;
@@ -264,6 +266,20 @@ public abstract class ConstellationManager {
 	private static void handleTeamMemberAccepted(LiveEvent event, JsonObject payload) {
 		// TODO: Make a "member accepted" announcement to the appropriate
 		// channels
+
+		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
+			try {
+				JDAManager.giveTeamRoleToUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
+						.getUserForDiscordTag(payload.get("social").getAsJsonObject().get("discord").getAsString()));
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (RateLimitedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		subscribeToChannel(BeamManager.getUser(payload.get("id").getAsInt()).channel);
 	}
 
@@ -287,22 +303,21 @@ public abstract class ConstellationManager {
 	}
 
 	private static void handleTeamMemberRemoved(LiveEvent event, JsonObject payload) {
-		try {
-			if (Files.notExists(Paths.get("payloads\\"))) {
-				new File("payloads\\").mkdir();
-			}
-
-			Logger logger = Logger.getLogger("payload-teamMemberRemoved");
-			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
-			SimpleFormatter formatter = new SimpleFormatter();
-			fh.setFormatter(formatter);
-
-			logger.addHandler(fh);
-
-			logger.log(Level.INFO, payload.toString());
-		} catch (SecurityException | IOException e) {}
 		// TODO: Make a "member has left" announcement to the appropriate
 		// channels
+
+		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
+			try {
+				JDAManager.removeTeamRoleFromUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
+						.getUserForDiscordTag(payload.get("social").getAsJsonObject().get("discord").getAsString()));
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (RateLimitedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private static void handleTeamOwnerChanged(LiveEvent event, JsonObject payload) {

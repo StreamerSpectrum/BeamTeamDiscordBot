@@ -21,6 +21,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBRole;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 
 public abstract class DbManager {
@@ -275,6 +276,10 @@ public abstract class DbManager {
 				statement.close();
 			}
 		}
+	}
+
+	public static int readVersion() throws SQLException {
+		return Integer.parseInt(read(Constants.TABLE_VERSION, new String[] { "ID" }, null, null).get(0).get(0));
 	}
 
 	public static boolean createGuild(BTBGuild guild) throws SQLException {
@@ -648,8 +653,48 @@ public abstract class DbManager {
 
 		return delete(Constants.TABLE_GOLIVEMESSAGES, where);
 	}
+	
+	public static boolean createTeamRole(BTBRole role) throws SQLException{
+		return create(Constants.TABLE_TEAMROLES, role.getDbValues());
+	}
 
-	public static int readVersion() throws SQLException {
-		return Integer.parseInt(read(Constants.TABLE_VERSION, new String[] { "ID" }, null, null).get(0).get(0));
+	public static List<BTBRole> readTeamRolesForGuild(long guildID) throws SQLException {
+		List<BTBRole> roles = new ArrayList<>();
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TEAMROLES_COL_GUILDID, guildID);
+
+		List<List<String>> valuesList = read(Constants.TABLE_TEAMROLES, null, null, where);
+
+		for (List<String> values : valuesList) {
+			roles.add(new BTBRole(Long.parseLong(values.get(0)), Integer.parseInt(values.get(1)), values.get(2)));
+		}
+
+		return roles;
+	}
+
+	public static List<BTBRole> readTeamRolesForTeam(int teamID) throws SQLException {
+		List<BTBRole> roles = new ArrayList<>();
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TEAMROLES_COL_TEAMID, teamID);
+
+		List<List<String>> valuesList = read(Constants.TABLE_TEAMROLES, null, null, where);
+
+		for (List<String> values : valuesList) {
+			roles.add(new BTBRole(Long.parseLong(values.get(0)), Integer.parseInt(values.get(1)), values.get(3)));
+		}
+
+		return roles;
+	}
+	
+	public static boolean deleteTeamRole(BTBRole role) throws SQLException {		
+		return delete(Constants.TABLE_TEAMROLES, role.getDbValues());
+	}
+	
+	public static boolean deleteTeamRole(long guildID, int teamID) throws SQLException {
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.TEAMROLES_COL_GUILDID, guildID);
+		where.put(Constants.TEAMROLES_COL_TEAMID, teamID);
+		
+		return delete(Constants.TABLE_TEAMROLES, where);
 	}
 }

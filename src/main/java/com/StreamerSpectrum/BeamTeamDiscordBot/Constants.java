@@ -5,6 +5,7 @@ public abstract class Constants {
 	public static final String	TABLE_CHANNELS									= "Channels";
 	public static final String	TABLE_GOLIVEMESSAGES							= "GoLiveMessages";
 	public static final String	TABLE_GUILDS									= "Guilds";
+	public static final String	TABLE_TEAMROLES									= "TeamRoles";
 	public static final String	TABLE_TEAMS										= "Teams";
 	public static final String	TABLE_TRACKEDCHANNELS							= "TrackedChannels";
 	public static final String	TABLE_TRACKEDTEAMS								= "TrackedTeams";
@@ -26,6 +27,10 @@ public abstract class Constants {
 	public static final String	GUILDS_COL_GOLIVECHANNELID						= "GoLiveChannelID";
 	public static final String	GUILDS_COL_LOGCHANNELID							= "LogChannelID";
 	public static final String	GUILDS_COL_REMOVEOFFLINECHANNELANNOUNCEMENTS	= "RemoveOfflineChannels";
+
+	public static final String	TEAMROLES_COL_GUILDID							= "GuildID";
+	public static final String	TEAMROLES_COL_TEAMID							= "TeamID";
+	public static final String	TEAMROLES_COL_ROLEID							= "RoleID";
 
 	public static final String	TEAMS_COL_ID									= "ID";
 	public static final String	TEAMS_COL_NAME									= "Name";

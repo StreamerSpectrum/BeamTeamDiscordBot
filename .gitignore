@@ -107,3 +107,4 @@ resources/config.txt
 *.db
 payloads/
 schema.sql
+BeamTeamDiscordBot.bat
