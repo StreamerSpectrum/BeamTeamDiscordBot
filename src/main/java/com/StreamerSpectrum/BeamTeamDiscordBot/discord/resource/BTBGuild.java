@@ -1,6 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -92,12 +91,7 @@ public class BTBGuild {
 	}
 
 	private void update() {
-		try {
-			DbManager.updateGuild(this);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		DbManager.updateGuild(this);
 	}
 
 	public Map<String, Object> getDbValues() {
@@ -116,12 +110,7 @@ public class BTBGuild {
 	public List<BeamTeam> getTrackedTeams() {
 		List<BeamTeam> teams = new ArrayList<>();
 
-		try {
-			teams = DbManager.readTrackedTeamsForGuild(id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		teams = DbManager.readTrackedTeamsForGuild(id);
 
 		return teams;
 	}
@@ -129,12 +118,7 @@ public class BTBGuild {
 	public List<BTBBeamChannel> getTrackedChannels() {
 		List<BTBBeamChannel> channels = new ArrayList<>();
 
-		try {
-			channels = DbManager.readTrackedChannelsForGuild(id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		channels = DbManager.readTrackedChannelsForGuild(id);
 
 		return channels;
 	}
@@ -142,16 +126,11 @@ public class BTBGuild {
 	public boolean addTeam(BeamTeam team) {
 		boolean added = false;
 
-		try {
-			if (DbManager.readTeam(team.id) == null) {
-				DbManager.createTeam(team);
-			}
-
-			added = DbManager.createTrackedTeam(id, team.id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (DbManager.readTeam(team.id) == null) {
+			DbManager.createTeam(team);
 		}
+
+		added = DbManager.createTrackedTeam(id, team.id);
 
 		if (added) {
 			ConstellationManager.subscribeToTeam(team);
@@ -163,12 +142,7 @@ public class BTBGuild {
 	public boolean removeTeam(BeamTeam team) {
 		boolean isDeleted = false;
 
-		try {
-			isDeleted = DbManager.deleteTrackedTeam(id, team.id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		isDeleted = DbManager.deleteTrackedTeam(id, team.id);
 
 		return isDeleted;
 	}
@@ -176,16 +150,11 @@ public class BTBGuild {
 	public boolean addChannel(BTBBeamChannel channel) {
 		boolean added = false;
 
-		try {
-			if (DbManager.readChannel(channel.id) == null) {
-				DbManager.createChannel(channel);
-			}
-
-			added = DbManager.createTrackedChannel(id, channel.id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (DbManager.readChannel(channel.id) == null) {
+			DbManager.createChannel(channel);
 		}
+
+		added = DbManager.createTrackedChannel(id, channel.id);
 
 		if (added) {
 			ConstellationManager.subscribeToChannel(channel);
@@ -197,12 +166,7 @@ public class BTBGuild {
 	public boolean removeChannel(BTBBeamChannel channel) {
 		boolean isDeleted = false;
 
-		try {
-			isDeleted = DbManager.deleteTrackedChannel(id, channel.id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		isDeleted = DbManager.deleteTrackedChannel(id, channel.id);
 
 		return isDeleted;
 	}

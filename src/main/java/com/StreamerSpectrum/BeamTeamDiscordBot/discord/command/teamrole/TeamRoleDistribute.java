@@ -1,6 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.teamrole;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBRole;
@@ -21,21 +20,13 @@ public class TeamRoleDistribute extends Command {
 
 	@Override
 	protected void execute(CommandEvent event) {
-		try {
-			List<BTBRole> roles = DbManager.readTeamRolesForGuild(Long.parseLong(event.getGuild().getId()));
+		List<BTBRole> roles = DbManager.readTeamRolesForGuild(Long.parseLong(event.getGuild().getId()));
 
-			for (BTBRole role : roles) {
-				JDAManager.distributeTeamRoleToGuildTeamMembers(role);
-			}
-			
-			JDAManager.sendMessage(event, "Team role distribution complete!");
-		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		for (BTBRole role : roles) {
+			JDAManager.distributeTeamRoleToGuildTeamMembers(role);
 		}
+
+		JDAManager.sendMessage(event, "Team role distribution complete!");
 	}
 
 }

@@ -1,6 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot;
 
-import java.sql.SQLException;
 import javax.security.auth.login.LoginException;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.ConstellationManager;
@@ -12,16 +11,11 @@ public class BTBMain {
 
 	public static void main(String[] args) throws LoginException, RateLimitedException, InterruptedException {
 		JDAManager.getJDA(); // TODO: Replace this with the ShardManager.
-		
-		try {
-			load();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+		load();
 	}
 
-	public static void load() throws SQLException {
+	public static void load() {
 		ConstellationManager.getConnectable();
 	}
 

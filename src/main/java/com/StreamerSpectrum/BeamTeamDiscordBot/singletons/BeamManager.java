@@ -68,10 +68,8 @@ public abstract class BeamManager {
 
 		try {
 			user = getBeam().use(BTBUsersService.class).findOne(id).get();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO: Log error to log channel
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -83,10 +81,7 @@ public abstract class BeamManager {
 
 		try {
 			user = getBeam().use(BTBUsersService.class).search(name).get().get(0);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -99,10 +94,7 @@ public abstract class BeamManager {
 
 		try {
 			team = getBeam().use(TeamsService.class).findOne(token).get();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -112,17 +104,14 @@ public abstract class BeamManager {
 
 	public static BeamTeam getTeam(int id) {
 		BeamTeam team = null;
-		
+
 		try {
 			team = getBeam().use(TeamsService.class).findOne(id).get();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return team;
 	}
 
@@ -140,11 +129,8 @@ public abstract class BeamManager {
 
 		try {
 			while (teamMembers.addAll(getBeam().use(TeamsService.class).teamMembersOf(team, page++, 50).get()));
-		} catch (InterruptedException e) {
-			// TODO Send a log message to the log channel
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Send a log message to the log channel
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -162,15 +148,12 @@ public abstract class BeamManager {
 	public static List<BTBBeamChannel> getFollowing(BTBBeamUser user) {
 		BTBUserFollowsResponse following = new BTBUserFollowsResponse();
 
-		try {
-			int page = 0;
+		int page = 0;
 
+		try {
 			while (getUserReadLimit().isNotLimited()
 					&& following.addAll(getBeam().use(BTBUsersService.class).following(user.id, page++, 50).get()));
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -191,10 +174,7 @@ public abstract class BeamManager {
 					TimeUnit.SECONDS.sleep(1);
 				}
 			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -215,10 +195,7 @@ public abstract class BeamManager {
 					TimeUnit.SECONDS.sleep(1);
 				}
 			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -235,11 +212,8 @@ public abstract class BeamManager {
 
 		try {
 			teams = getBeam().use(BTBUsersService.class).teams(id).get();
-		} catch (InterruptedException e) {
-			// TODO Send a log message to the log channel
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Send a log message to the log channel
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

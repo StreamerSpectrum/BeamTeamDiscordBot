@@ -1,6 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.singletons;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +7,6 @@ import java.util.Map;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 
 import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public abstract class GuildManager {
 
@@ -16,19 +14,11 @@ public abstract class GuildManager {
 
 	public static void init() {
 		// TODO: populate guildShardIDs on login
-		try {
-			List<Guild> guilds = JDAManager.getJDA().getGuilds();
+		List<Guild> guilds = JDAManager.getJDA().getGuilds();
 
-			for (Guild guild : guilds) {
-				getGuildShardIDs().put(Long.parseLong(guild.getId()), JDAManager.getJDA().getShardInfo() != null
-						? JDAManager.getJDA().getShardInfo().getShardId() : 0);
-			}
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RateLimitedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		for (Guild guild : guilds) {
+			getGuildShardIDs().put(Long.parseLong(guild.getId()),
+					JDAManager.getJDA().getShardInfo() != null ? JDAManager.getJDA().getShardInfo().getShardId() : 0);
 		}
 
 	}
@@ -42,12 +32,7 @@ public abstract class GuildManager {
 	}
 
 	public static void addGuild(BTBGuild guild) {
-		try {
-			DbManager.createGuild(guild);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		DbManager.createGuild(guild);
 	}
 
 	public static int getShardID(long guildID) {
@@ -55,23 +40,13 @@ public abstract class GuildManager {
 	}
 
 	public static void deleteGuild(long id) {
-		try {
-			DbManager.deleteGuild(id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		DbManager.deleteGuild(id);
 	}
 
 	public static BTBGuild getGuild(long id) {
 		BTBGuild guild = null;
 
-		try {
-			guild = DbManager.readGuild(id);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		guild = DbManager.readGuild(id);
 
 		return guild;
 	}

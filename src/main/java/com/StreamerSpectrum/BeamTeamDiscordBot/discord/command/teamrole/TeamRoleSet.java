@@ -1,6 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.teamrole;
 
-import java.sql.SQLException;
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
@@ -46,21 +45,16 @@ public class TeamRoleSet extends Command {
 						: event.getGuild().getRolesByName(roleArg, true).get(0);
 
 				if (null != team && null != role) {
-					try {
-						BTBRole teamRole = new BTBRole(guild.getID(), team.id, role.getId());
+					BTBRole teamRole = new BTBRole(guild.getID(), team.id, role.getId());
 
-						if (DbManager.createTeamRole(teamRole)) {
-							JDAManager.distributeTeamRoleToGuildTeamMembers(teamRole);
+					if (DbManager.createTeamRole(teamRole)) {
+						JDAManager.distributeTeamRoleToGuildTeamMembers(teamRole);
 
-							JDAManager.sendMessage(event, "The role '%s' will now be added to all new %s members.",
-									role.getName(), team.name);
-						} else {
-							JDAManager.sendMessage(event, "I am unable to associate the '%s' role with %s.",
-									role.getName(), team.name);
-						}
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						JDAManager.sendMessage(event, "The role '%s' will now be added to all new %s members.",
+								role.getName(), team.name);
+					} else {
+						JDAManager.sendMessage(event, "I am unable to associate the '%s' role with %s.", role.getName(),
+								team.name);
 					}
 				} else {
 					JDAManager.sendMessage(event,

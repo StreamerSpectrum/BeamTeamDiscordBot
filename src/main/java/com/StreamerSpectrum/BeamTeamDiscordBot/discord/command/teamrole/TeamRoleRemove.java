@@ -1,6 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.teamrole;
 
-import java.sql.SQLException;
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
@@ -29,20 +28,12 @@ public class TeamRoleRemove extends Command {
 			BeamTeam team = CommandHelper.getTeam(event, arg);
 
 			if (null != team) {
-				try {
-					if (DbManager.deleteTeamRole(Long.parseLong(event.getGuild().getId()), team.id)) {
-						JDAManager.sendMessage(event, "Successfully removed %s's role!", team.name);
-					} else {
-						JDAManager.sendMessage(event,
-								"I was unable to remove %s's role from your configuration. Please make sure that team has a role set.",
-								team.name);
-					}
-				} catch (NumberFormatException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				if (DbManager.deleteTeamRole(Long.parseLong(event.getGuild().getId()), team.id)) {
+					JDAManager.sendMessage(event, "Successfully removed %s's role!", team.name);
+				} else {
+					JDAManager.sendMessage(event,
+							"I was unable to remove %s's role from your configuration. Please make sure that team has a role set.",
+							team.name);
 				}
 			}
 		} else {

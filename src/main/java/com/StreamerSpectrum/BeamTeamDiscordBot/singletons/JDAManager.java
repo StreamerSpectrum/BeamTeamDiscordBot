@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;
@@ -22,6 +21,8 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.channel.ChannelLi
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveDeleteOffline;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveRemove;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveSet;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.log.LogRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.log.LogSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamRemove;
@@ -65,7 +66,7 @@ public abstract class JDAManager {
 	private static CommandClient	commandClient;
 	private static EventWaiter		waiter;
 
-	public static JDA getJDA() throws IllegalArgumentException, RateLimitedException {
+	public static JDA getJDA() {
 		if (null == jda) {
 			try (BufferedReader br = new BufferedReader(new FileReader(new File("resources/config.txt")))) {
 				String botToken = br.readLine();
@@ -77,6 +78,12 @@ public abstract class JDAManager {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (LoginException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (RateLimitedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -92,7 +99,7 @@ public abstract class JDAManager {
 							new MemberInfo(), new FollowReport(), new MemberList(), new GoLiveSet(), new GoLiveRemove(),
 							new GoLiveDeleteOffline(), new ChannelAdd(), new ChannelRemove(), new ChannelList(),
 							new TeamRoleSet(), new TeamRoleRemove(), new TeamRoleList(), new TeamRoleDistribute(),
-							new RestartConstellation())
+							new LogSet(), new LogRemove(), new RestartConstellation())
 					.build();
 		}
 
@@ -108,53 +115,31 @@ public abstract class JDAManager {
 	}
 
 	public static void sendGoLiveMessage(String channelID, MessageEmbed embed, BTBBeamChannel channel) {
-		try {
-			getJDA().getTextChannelById(channelID).sendMessage(embed).queue(new Consumer<Message>() {
+		getJDA().getTextChannelById(channelID).sendMessage(embed).queue(new Consumer<Message>() {
 
-				@Override
-				public void accept(Message t) {
-					try {
-						DbManager.createGoLiveMessage(new GoLiveMessage(t.getId(), t.getChannel().getId(),
-								Long.parseLong(t.getGuild().getId()), channel.id));
-					} catch (SQLException e) {
-						// TODO Auto-generated catch
-						// block
-						e.printStackTrace();
-					}
+			@Override
+			public void accept(Message t) {
+				DbManager.createGoLiveMessage(new GoLiveMessage(t.getId(), t.getChannel().getId(),
+						Long.parseLong(t.getGuild().getId()), channel.id));
 
-				}
-			});
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RateLimitedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			}
+		});
 	}
 
 	public static void sendMessage(String channelID, Message msg) {
-		try {
-			getJDA().getTextChannelById(channelID).sendMessage(msg).queue();
-		} catch (IllegalArgumentException | RateLimitedException e) {}
+		getJDA().getTextChannelById(channelID).sendMessage(msg).queue();
 	}
 
 	public static void sendMessage(String channelID, MessageEmbed embed) {
-		try {
-			getJDA().getTextChannelById(channelID).sendMessage(embed).queue();
-		} catch (IllegalArgumentException | RateLimitedException e) {}
+		getJDA().getTextChannelById(channelID).sendMessage(embed).queue();
 	}
 
 	public static void sendMessage(String channelID, String text) {
-		try {
-			getJDA().getTextChannelById(channelID).sendMessage(text).queue();
-		} catch (IllegalArgumentException | RateLimitedException e) {}
+		getJDA().getTextChannelById(channelID).sendMessage(text).queue();
 	}
 
 	public static void sendMessage(String channelID, String format, Object... args) {
-		try {
-			getJDA().getTextChannelById(channelID).sendMessage(format, args).queue();
-		} catch (IllegalArgumentException | RateLimitedException e) {}
+		getJDA().getTextChannelById(channelID).sendMessage(format, args).queue();
 	}
 
 	public static void sendMessage(CommandEvent event, Message msg) {
@@ -178,15 +163,7 @@ public abstract class JDAManager {
 	}
 
 	public static void deleteMessage(String messageID, String goLiveChannelID) {
-		try {
-			getJDA().getTextChannelById(goLiveChannelID).deleteMessageById(messageID).queue();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RateLimitedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		getJDA().getTextChannelById(goLiveChannelID).deleteMessageById(messageID).queue();
 	}
 
 	public static MessageEmbed buildGoLiveEmbed(BTBBeamChannel channel) {
@@ -232,85 +209,51 @@ public abstract class JDAManager {
 
 	public static void giveTeamRoleToUser(BTBRole role, User user) {
 		if (null != user) {
-			try {
-				Guild guild = getJDA().getGuildById(Long.toString(role.getGuildID()));
-				Member member = guild.getMember(user);
+			Guild guild = getJDA().getGuildById(Long.toString(role.getGuildID()));
+			Member member = guild.getMember(user);
 
-				if (null != member) {
-					guild.getController().addRolesToMember(member, guild.getRoleById(role.getRoleID())).queue();
-				}
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (RateLimitedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if (null != member) {
+				guild.getController().addRolesToMember(member, guild.getRoleById(role.getRoleID())).queue();
 			}
 		}
 	}
 
 	public static void giveTeamRoleToUserOnAllGuilds(int teamID, User user) {
-		try {
-			List<BTBRole> roles = DbManager.readTeamRolesForTeam(teamID);
+		List<BTBRole> roles = DbManager.readTeamRolesForTeam(teamID);
 
-			for (BTBRole role : roles) {
-				giveTeamRoleToUser(role, user);
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		for (BTBRole role : roles) {
+			giveTeamRoleToUser(role, user);
 		}
 	}
 
 	public static void distributeTeamRoleToGuildTeamMembers(BTBRole role) {
-		try {
-			List<BeamTeamUser> members = BeamManager.getTeamMembers(role.getTeamID());
+		List<BeamTeamUser> members = BeamManager.getTeamMembers(role.getTeamID());
 
-			for (BeamTeamUser member : members) {
-				if (null != member.social && StringUtils.isNotBlank(member.social.discord)) {
-					giveTeamRoleToUser(role, getUserForDiscordTag(member.social.discord));
-				}
+		for (BeamTeamUser member : members) {
+			if (null != member.social && StringUtils.isNotBlank(member.social.discord)) {
+				giveTeamRoleToUser(role, getUserForDiscordTag(member.social.discord));
 			}
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RateLimitedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 
 	public static void removeTeamRoleFromUser(BTBRole role, User user) {
-		try {
-			Guild guild = getJDA().getGuildById(Long.toString(role.getGuildID()));
-			Member member = guild.getMember(user);
+		Guild guild = getJDA().getGuildById(Long.toString(role.getGuildID()));
+		Member member = guild.getMember(user);
 
-			if (null != member) {
-				guild.getController().removeRolesFromMember(member, guild.getRoleById(role.getRoleID())).queue();
-			}
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RateLimitedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (null != member) {
+			guild.getController().removeRolesFromMember(member, guild.getRoleById(role.getRoleID())).queue();
 		}
 	}
 
 	public static void removeTeamRoleFromUserOnAllGuilds(int teamID, User user) {
-		try {
-			List<BTBRole> roles = DbManager.readTeamRolesForTeam(teamID);
+		List<BTBRole> roles = DbManager.readTeamRolesForTeam(teamID);
 
-			for (BTBRole role : roles) {
-				removeTeamRoleFromUser(role, user);
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		for (BTBRole role : roles) {
+			removeTeamRoleFromUser(role, user);
 		}
 	}
 
-	public static User getUserForDiscordTag(String tag) throws IllegalArgumentException, RateLimitedException {
+	public static User getUserForDiscordTag(String tag) {
 		List<User> potentialUsers = getJDA().getUsersByName(tag.substring(0, tag.indexOf("#")), true);
 
 		for (User user : potentialUsers) {

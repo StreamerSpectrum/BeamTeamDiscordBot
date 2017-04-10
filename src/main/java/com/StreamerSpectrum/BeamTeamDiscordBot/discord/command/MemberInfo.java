@@ -58,9 +58,7 @@ public class MemberInfo extends Command {
 						} else if (retry < 5) {
 							try {
 								TimeUnit.SECONDS.sleep(5);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
+							} catch (InterruptedException ignore) {}
 						} else {
 
 							JDAManager.sendMessage(event, "Unable to find information for user %s.", userArg);

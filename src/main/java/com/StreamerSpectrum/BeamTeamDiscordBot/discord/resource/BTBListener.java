@@ -1,6 +1,5 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -36,30 +35,21 @@ public class BTBListener implements EventListener {
 			if (event instanceof GuildMemberJoinEvent) {
 				GuildMemberJoinEvent gmje = ((GuildMemberJoinEvent) gge);
 
-				try {
-					List<BTBRole> roles = DbManager.readTeamRolesForGuild(Long.parseLong(gmje.getGuild().getId()));
+				List<BTBRole> roles = DbManager.readTeamRolesForGuild(Long.parseLong(gmje.getGuild().getId()));
 
-					for (BTBRole role : roles) {
-						List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(role.getTeamID());
+				for (BTBRole role : roles) {
+					List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(role.getTeamID());
 
-						for (BeamTeamUser member : teamMembers) {
-							if (null != member.social && StringUtils.isNotBlank(member.social.discord)) {
-								if (StringUtils.containsIgnoreCase(member.social.discord,
-										gmje.getMember().getUser().getName())) {
-									JDAManager.giveTeamRoleToUser(role, gmje.getMember().getUser());
-									break;
-								}
+					for (BeamTeamUser member : teamMembers) {
+						if (null != member.social && StringUtils.isNotBlank(member.social.discord)) {
+							if (StringUtils.containsIgnoreCase(member.social.discord,
+									gmje.getMember().getUser().getName())) {
+								JDAManager.giveTeamRoleToUser(role, gmje.getMember().getUser());
+								break;
 							}
 						}
 					}
-				} catch (NumberFormatException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
-
 			} else if (event instanceof GuildJoinEvent) {
 				GuildManager.getGuild(gge.getGuild());
 				System.out.println(String.format("%s has added the bot, they have been added to the database.",

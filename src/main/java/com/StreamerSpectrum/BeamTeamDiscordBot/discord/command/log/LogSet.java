@@ -27,22 +27,18 @@ public class LogSet extends Command {
 		if (!StringUtils.isBlank(event.getArgs())) {
 			String arg = event.getArgs().trim();
 
-			try {
-				List<TextChannel> textChannels = event.getJDA().getTextChannelsByName(arg, true);
+			List<TextChannel> textChannels = event.getJDA().getTextChannelsByName(arg, true);
 
-				if (!textChannels.isEmpty()) {
-					BTBGuild guild = GuildManager.getGuild(event.getGuild());
+			if (!textChannels.isEmpty()) {
+				BTBGuild guild = GuildManager.getGuild(event.getGuild());
 
-					guild.setLogChannelID(textChannels.get(0).getId());
+				guild.setLogChannelID(textChannels.get(0).getId());
 
-					JDAManager.sendMessage(event, "Log channel has been set to %s.", arg);
-				} else {
-					JDAManager.sendMessage(event,
-							"I can't find the channel named %s. Please ensure it exists and that I have read & write priveleges for it.",
-							arg);
-				}
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
+				JDAManager.sendMessage(event, "Log channel has been set to %s.", arg);
+			} else {
+				JDAManager.sendMessage(event,
+						"I can't find the channel named %s. Please ensure it exists and that I have read & write priveleges for it.",
+						arg);
 			}
 		} else {
 			JDAManager.sendMessage(event, "Missing arguments from command!");
