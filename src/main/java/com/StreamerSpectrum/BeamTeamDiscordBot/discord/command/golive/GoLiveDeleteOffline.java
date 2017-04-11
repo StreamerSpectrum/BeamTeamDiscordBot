@@ -14,7 +14,7 @@ public class GoLiveDeleteOffline extends Command {
 
 	public GoLiveDeleteOffline() {
 		this.name = "golivedeleteoffline";
-		this.help = "Sets whether to go-live announcements when the streamer goes offline.";
+		this.help = "Sets whether to delete go-live announcements when the streamer goes offline.";
 		this.arguments = "true/false";
 		this.userPermissions = new Permission[] { Permission.MANAGE_CHANNEL };
 	}

@@ -343,6 +343,19 @@ public abstract class DbManager {
 		return guilds;
 	}
 
+	public static List<BTBGuild> readAllGuilds(Map<String, Object> where) {
+		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
+		List<List<String>> valuesList = read(Constants.TABLE_GUILDS, null, null, where);
+
+		for (List<String> values : valuesList) {
+			guilds.add(
+					new BTBGuild(Long.parseLong(values.get(0)), GuildManager.getShardID(Long.parseLong(values.get(0))),
+							values.get(1), values.get(2), values.get(3), values.get(4), "1".equals((values.get(5)))));
+		}
+
+		return guilds;
+	}
+
 	public static boolean updateGuild(BTBGuild guild) {
 		Map<String, Object> where = new HashMap<>();
 		where.put(Constants.GUILDS_COL_ID, guild.getID());
@@ -679,6 +692,19 @@ public abstract class DbManager {
 		return create(Constants.TABLE_GOLIVEMESSAGES, message.getDbValues());
 	}
 
+	public static List<GoLiveMessage> readAllGoLiveMessages() {
+		List<GoLiveMessage> messages = new ArrayList<>();
+
+		List<List<String>> valueLists = read(Constants.TABLE_GOLIVEMESSAGES, null, null, null);
+
+		for (List<String> values : valueLists) {
+			messages.add(new GoLiveMessage(values.get(0), values.get(1), Long.parseLong(values.get(2)),
+					Integer.parseInt(values.get(3))));
+		}
+
+		return messages;
+	}
+
 	public static List<GoLiveMessage> readAllGoLiveMessagesForChannel(int channelID) {
 		List<GoLiveMessage> messages = new ArrayList<>();
 
@@ -693,6 +719,10 @@ public abstract class DbManager {
 		}
 
 		return messages;
+	}
+
+	public static boolean deleteAllGoLiveMessages() {
+		return delete(Constants.TABLE_GOLIVEMESSAGES, null);
 	}
 
 	public static boolean deleteGoLiveMessagesForChannel(int channelID) {

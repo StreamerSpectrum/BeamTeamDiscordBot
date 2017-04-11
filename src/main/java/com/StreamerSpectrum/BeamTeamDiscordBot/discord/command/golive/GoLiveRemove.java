@@ -21,6 +21,7 @@ public class GoLiveRemove extends Command {
 		BTBGuild guild = GuildManager.getGuild(event.getGuild());
 		if (guild.getGoLiveChannelID() != null) {
 			guild.setGoLiveChannelID(null);
+			JDAManager.sendMessage(event, "Go-live channel has been removed for this server.");
 		} else {
 			JDAManager.sendMessage(event, "There is no go-live channel set for this server.");
 		}

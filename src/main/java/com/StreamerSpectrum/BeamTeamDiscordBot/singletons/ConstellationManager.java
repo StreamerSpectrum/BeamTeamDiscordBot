@@ -43,9 +43,19 @@ public abstract class ConstellationManager {
 	private final static Logger					logger	= Logger.getLogger(BTBMain.class.getName());
 
 	private static BeamConstellationConnectable	connectable;
+	private static Set<BTBBeamChannel>			startupAnnounced;
 
 	private static void init() {
+		setStartupAnnounced(new HashSet<>());
 		handleEvents();
+
+		List<GoLiveMessage> messages = DbManager.readAllGoLiveMessages();
+
+		for (GoLiveMessage message : messages) {
+			JDAManager.deleteMessage(message);
+		}
+
+		DbManager.deleteAllGoLiveMessages();
 
 		subscribeToAnnouncements();
 
@@ -63,6 +73,7 @@ public abstract class ConstellationManager {
 
 		// TODO: subscribe to tracked followers
 		// TODO: subscribe to tracked followees
+		setStartupAnnounced(null);
 	}
 
 	public static BeamConstellationConnectable getConnectable() {
@@ -75,6 +86,14 @@ public abstract class ConstellationManager {
 		}
 
 		return connectable;
+	}
+
+	private static Set<BTBBeamChannel> getStartupAnnounced() {
+		return startupAnnounced;
+	}
+
+	private static void setStartupAnnounced(Set<BTBBeamChannel> startupAnnounced) {
+		ConstellationManager.startupAnnounced = startupAnnounced;
 	}
 
 	public static void restartConstellation() {
@@ -191,15 +210,8 @@ public abstract class ConstellationManager {
 				if (!guilds.isEmpty()) {
 					if (payload.get("online").getAsBoolean()) {
 						for (BTBGuild guild : guilds) {
-							if (StringUtils.isNotBlank(guild.getGoLiveChannelID())) {
-								JDAManager.sendGoLiveMessage(guild.getGoLiveChannelID(),
-										JDAManager.buildGoLiveEmbed(channel), channel);
-							}
-
-							if (StringUtils.isNotBlank(guild.getLogChannelID())) {
-								JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has gone ***live***!",
-										channel.user.username);
-							}
+							guild.sendGoLiveMessage(channel);
+							guild.sendLogMessage(String.format("**%s** has gone ***live***!", channel.user.username));
 						}
 					} else {
 						List<GoLiveMessage> messagesList = new ArrayList<>();
@@ -207,18 +219,14 @@ public abstract class ConstellationManager {
 						messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
 
 						for (GoLiveMessage message : messagesList) {
-							if (DbManager.readGuild(message.getGuildID()).isRemoveOfflineChannelAnnouncements()) {
-								JDAManager.deleteMessage(message);
-							}
+							JDAManager.deleteMessage(message);
 						}
 
 						DbManager.deleteGoLiveMessagesForChannel(channel.id);
 
 						for (BTBGuild guild : guilds) {
-							if (StringUtils.isNotBlank(guild.getLogChannelID())) {
-								JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has gone ***offline***!",
-										channel.user.username);
-							}
+							guild.sendLogMessage(
+									String.format("**%s** has gone ***offline***.", channel.user.username));
 						}
 					}
 				} else {
@@ -259,10 +267,8 @@ public abstract class ConstellationManager {
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {
-			if (StringUtils.isNotBlank(guild.getLogChannelID())) {
-				JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has joined ***%s***!",
-						payload.get("username").getAsString(), team.token);
-			}
+			guild.sendLogMessage(
+					String.format("**%s** has joined ***%s***!", payload.get("username").getAsString(), team.token));
 
 			if (StringUtils.isNotBlank(guild.getNewMemberChannelID())) {
 				BTBBeamUser member = BeamManager.getUser(payload.get("id").getAsInt());
@@ -301,23 +307,19 @@ public abstract class ConstellationManager {
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {
-			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has been invited to join ***%s***!",
-					payload.get("username").getAsString(), team.token);
+			guild.sendLogMessage(String.format("**%s** has been invited to join ***%s***!",
+					payload.get("username").getAsString(), team.token));
 		}
-		// TODO: Make a "member was invited" announcement to the appropriate
-		// channels
 	}
 
 	private static void handleTeamMemberRemoved(LiveEvent event, JsonObject payload) {
-		// TODO: Make a "member has left" announcement to the appropriate
-		// channels
 		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true,
 				false);
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {
-			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has left ***%s***.",
-					payload.get("username").getAsString(), team.name);
+			guild.sendLogMessage(
+					String.format("**%s** has left ***%s***.", payload.get("username").getAsString(), team.name));
 		}
 
 		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
@@ -328,20 +330,14 @@ public abstract class ConstellationManager {
 	}
 
 	private static void handleTeamOwnerChanged(LiveEvent event, JsonObject payload) {
-		try {
-			if (Files.notExists(Paths.get("payloads\\"))) {
-				new File("payloads\\").mkdir();
-			}
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true,
+				false);
+		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
-			Logger logger = Logger.getLogger("payload-teamOwnerChanged");
-			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
-			SimpleFormatter formatter = new SimpleFormatter();
-			fh.setFormatter(formatter);
-
-			logger.addHandler(fh);
-
-			logger.log(Level.INFO, payload.toString());
-		} catch (SecurityException | IOException e) {}
+		for (BTBGuild guild : guilds) {
+			guild.sendLogMessage(String.format("**%s** owner changed to ***%s***.", team.name,
+					payload.get("username").getAsString()));
+		}
 	}
 
 	private static void handleTeamDeleted(LiveEvent event, JsonObject payload) {
@@ -350,7 +346,7 @@ public abstract class ConstellationManager {
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {
-			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has been deleted from Beam.", team.name);
+			guild.sendLogMessage(String.format("**%s** has been deleted from Beam.", team.name));
 		}
 
 		DbManager.deleteTeam(team.id);
@@ -379,6 +375,26 @@ public abstract class ConstellationManager {
 
 	public static void subscribeToChannel(BTBBeamChannel channel) {
 		logger.log(Level.INFO, String.format("Subscribing to %s's channel.", channel.token));
+
+		if (channel.online && (getStartupAnnounced() == null || !getStartupAnnounced().contains(channel))) {
+			Set<BTBGuild> guilds = new HashSet<>();
+
+			List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
+
+			for (TeamMembershipExpanded team : userTeams) {
+				guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true, false, false));
+			}
+
+			guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true, false, false));
+
+			for (BTBGuild guild : guilds) {
+				guild.sendGoLiveMessage(BeamManager.getChannel(channel.id));
+			}
+
+			if (getStartupAnnounced() != null) {
+				getStartupAnnounced().add(channel);
+			}
+		}
 
 		subscribeToEvent(String.format("channel:%d:update", channel.id));
 	}

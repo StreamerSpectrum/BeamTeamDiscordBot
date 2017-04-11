@@ -162,7 +162,9 @@ public abstract class JDAManager {
 	}
 
 	public static void deleteMessage(GoLiveMessage message) {
-		deleteMessage(message.getMessageID(), message.getGoLiveChannelID());
+		if (GuildManager.getGuild(message.getGuildID()).isRemoveOfflineChannelAnnouncements()) {
+			deleteMessage(message.getMessageID(), message.getGoLiveChannelID());
+		}
 	}
 
 	public static void deleteMessage(String messageID, String goLiveChannelID) {

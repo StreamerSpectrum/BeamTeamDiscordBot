@@ -1,6 +1,8 @@
 package com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +11,9 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.ConstellationManager;
-import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.DbManager;;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.DbManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
+import com.auth0.jwt.internal.org.apache.commons.lang3.StringUtils;;
 
 public class BTBGuild {
 
@@ -184,8 +188,16 @@ public class BTBGuild {
 		return isDeleted;
 	}
 
-	public void addRole(String string, String string2) {
-		// TODO Auto-generated method stub
+	public void sendGoLiveMessage(BTBBeamChannel channel) {
+		if (StringUtils.isNotBlank(getGoLiveChannelID())) {
+			JDAManager.sendGoLiveMessage(getGoLiveChannelID(), JDAManager.buildGoLiveEmbed(channel), channel);
+		}
+	}
 
+	public void sendLogMessage(String text) {
+		if (StringUtils.isNotBlank(getLogChannelID())) {
+			JDAManager.sendMessage(getLogChannelID(),
+					String.format("[%s] %s", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()), text));
+		}
 	}
 }
