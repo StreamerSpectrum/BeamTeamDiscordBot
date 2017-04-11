@@ -4,12 +4,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.BeamManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.ConstellationManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.DbManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
@@ -72,6 +76,37 @@ public class BTBGuild {
 
 	public void setGoLiveChannelID(String goLiveChannelID) {
 		this.goLiveChannelID = goLiveChannelID;
+
+		if (StringUtils.isNotBlank(goLiveChannelID)) {
+			Set<BTBBeamChannel> alreadyAnnounced = new HashSet<>();
+			List<BeamTeam> teams = getTrackedTeams();
+
+			for (BeamTeam team : teams) {
+				List<BeamTeamUser> members = BeamManager.getTeamMembers(team);
+
+				for (BeamTeamUser member : members) {
+					if (member.channel.online && !alreadyAnnounced.contains(member.channel)) {
+						BTBBeamChannel channel = BeamManager.getChannel(member.channel.id);
+
+						sendGoLiveMessage(channel);
+
+						alreadyAnnounced.add(channel);
+					}
+				}
+			}
+
+			List<BTBBeamChannel> channels = getTrackedChannels();
+
+			for (BTBBeamChannel channel : channels) {
+				channel = BeamManager.getChannel(channel.id);
+
+				if (channel.online && !alreadyAnnounced.contains(channel)) {
+					sendGoLiveMessage(channel);
+
+					alreadyAnnounced.add(channel);
+				}
+			}
+		}
 
 		update();
 	}
@@ -150,6 +185,16 @@ public class BTBGuild {
 		added = DbManager.createTrackedTeam(id, team.id);
 
 		if (added) {
+			if (StringUtils.isNotBlank(getGoLiveChannelID())) {
+				List<BeamTeamUser> members = BeamManager.getTeamMembers(team);
+
+				for (BeamTeamUser member : members) {
+					if (member.channel.online) {
+						sendGoLiveMessage(BeamManager.getChannel(member.channel.id));
+					}
+				}
+			}
+
 			ConstellationManager.subscribeToTeam(team);
 		}
 
@@ -174,6 +219,9 @@ public class BTBGuild {
 		added = DbManager.createTrackedChannel(id, channel.id);
 
 		if (added) {
+			if (channel.online) {
+				sendGoLiveMessage(channel);
+			}
 			ConstellationManager.subscribeToChannel(channel);
 		}
 

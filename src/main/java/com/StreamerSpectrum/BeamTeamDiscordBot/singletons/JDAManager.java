@@ -168,7 +168,9 @@ public abstract class JDAManager {
 	}
 
 	public static void deleteMessage(String messageID, String goLiveChannelID) {
-		getJDA().getTextChannelById(goLiveChannelID).deleteMessageById(messageID).queue();
+		if (StringUtils.isNotBlank(goLiveChannelID)) {
+			getJDA().getTextChannelById(goLiveChannelID).deleteMessageById(messageID).queue();
+		}
 	}
 
 	public static MessageEmbed buildGoLiveEmbed(BTBBeamChannel channel) {

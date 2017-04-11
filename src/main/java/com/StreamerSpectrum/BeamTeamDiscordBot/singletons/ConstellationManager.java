@@ -6,8 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +21,7 @@ import java.util.logging.SimpleFormatter;
 import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.BTBMain;
+import com.StreamerSpectrum.BeamTeamDiscordBot.Constants;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
@@ -43,10 +46,8 @@ public abstract class ConstellationManager {
 	private final static Logger					logger	= Logger.getLogger(BTBMain.class.getName());
 
 	private static BeamConstellationConnectable	connectable;
-	private static Set<BTBBeamChannel>			startupAnnounced;
 
 	private static void init() {
-		setStartupAnnounced(new HashSet<>());
 		handleEvents();
 
 		List<GoLiveMessage> messages = DbManager.readAllGoLiveMessages();
@@ -56,6 +57,8 @@ public abstract class ConstellationManager {
 		}
 
 		DbManager.deleteAllGoLiveMessages();
+
+		startupAnnounce();
 
 		subscribeToAnnouncements();
 
@@ -73,7 +76,44 @@ public abstract class ConstellationManager {
 
 		// TODO: subscribe to tracked followers
 		// TODO: subscribe to tracked followees
-		setStartupAnnounced(null);
+	}
+
+	private static void startupAnnounce() {
+		Map<String, Object> where = new HashMap<>();
+		where.put(Constants.GUILDS_COL_GOLIVECHANNELID, "IS NOT NULL");
+
+		List<BTBGuild> guilds = DbManager.readAllGuilds(where);
+
+		for (BTBGuild guild : guilds) {
+			Set<BTBBeamChannel> alreadyAnnounced = new HashSet<>();
+			List<BeamTeam> teams = guild.getTrackedTeams();
+
+			for (BeamTeam team : teams) {
+				List<BeamTeamUser> members = BeamManager.getTeamMembers(team);
+
+				for (BeamTeamUser member : members) {
+					if (member.channel.online && !alreadyAnnounced.contains(member.channel)) {
+						BTBBeamChannel channel = BeamManager.getChannel(member.channel.id);
+
+						guild.sendGoLiveMessage(channel);
+
+						alreadyAnnounced.add(channel);
+					}
+				}
+			}
+
+			List<BTBBeamChannel> channels = guild.getTrackedChannels();
+
+			for (BTBBeamChannel channel : channels) {
+				channel = BeamManager.getChannel(channel.id);
+
+				if (channel.online && !alreadyAnnounced.contains(channel)) {
+					guild.sendGoLiveMessage(channel);
+
+					alreadyAnnounced.add(channel);
+				}
+			}
+		}
 	}
 
 	public static BeamConstellationConnectable getConnectable() {
@@ -86,14 +126,6 @@ public abstract class ConstellationManager {
 		}
 
 		return connectable;
-	}
-
-	private static Set<BTBBeamChannel> getStartupAnnounced() {
-		return startupAnnounced;
-	}
-
-	private static void setStartupAnnounced(Set<BTBBeamChannel> startupAnnounced) {
-		ConstellationManager.startupAnnounced = startupAnnounced;
 	}
 
 	public static void restartConstellation() {
@@ -350,7 +382,7 @@ public abstract class ConstellationManager {
 		}
 
 		DbManager.deleteTeam(team.id);
-		
+
 		unsubscribeFromTeam(team);
 	}
 
@@ -378,26 +410,6 @@ public abstract class ConstellationManager {
 	public static void subscribeToChannel(BTBBeamChannel channel) {
 		logger.log(Level.INFO, String.format("Subscribing to %s's channel.", channel.token));
 
-		if (channel.online && (getStartupAnnounced() == null || !getStartupAnnounced().contains(channel))) {
-			Set<BTBGuild> guilds = new HashSet<>();
-
-			List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
-
-			for (TeamMembershipExpanded team : userTeams) {
-				guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true, false, false));
-			}
-
-			guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true, false, false));
-
-			for (BTBGuild guild : guilds) {
-				guild.sendGoLiveMessage(BeamManager.getChannel(channel.id));
-			}
-
-			if (getStartupAnnounced() != null) {
-				getStartupAnnounced().add(channel);
-			}
-		}
-
 		subscribeToEvent(String.format("channel:%d:update", channel.id));
 	}
 
@@ -420,7 +432,7 @@ public abstract class ConstellationManager {
 			subscribeToChannel(member.channel);
 		}
 	}
-	
+
 	public static void unsubscribeFromTeam(BeamTeam team) {
 		unsubscribeFromEvent(String.format("team:%d:memberAccepted", team.id));
 		unsubscribeFromEvent(String.format("team:%d:memberInvited", team.id));
