@@ -123,13 +123,13 @@ public abstract class DbManager {
 
 			for (String key : where.keySet()) {
 				if (StringUtils.contains(where.get(key).toString(), "NULL")) {
-					whereBuilder.append(String.format("%s %s AND", key, where.get(key)));
+					whereBuilder.append(String.format("%s %s AND ", key, where.get(key)));
 				} else {
 					whereBuilder.append(String.format("%s = ? AND ", key));
 				}
 			}
 
-			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
+			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND "))));
 		}
 
 		sql.append(";");
@@ -207,13 +207,13 @@ public abstract class DbManager {
 
 			for (String key : where.keySet()) {
 				if (StringUtils.contains(where.get(key).toString(), "NULL")) {
-					whereBuilder.append(String.format("%s %s AND", key, where.get(key)));
+					whereBuilder.append(String.format("%s %s AND ", key, where.get(key)));
 				} else {
 					whereBuilder.append(String.format("%s = ? AND ", key));
 				}
 			}
 
-			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
+			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND "))));
 		}
 
 		sql.append(";");
@@ -264,13 +264,13 @@ public abstract class DbManager {
 
 			for (String key : where.keySet()) {
 				if (StringUtils.contains(where.get(key).toString(), "NULL")) {
-					whereBuilder.append(String.format("%s %s AND", key, where.get(key)));
+					whereBuilder.append(String.format("%s %s AND ", key, where.get(key)));
 				} else {
 					whereBuilder.append(String.format("%s = ? AND ", key));
 				}
 			}
 
-			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND"))));
+			sql.append(String.format("%s", whereBuilder.substring(0, whereBuilder.lastIndexOf(" AND "))));
 		}
 
 		sql.append(";");
@@ -502,7 +502,8 @@ public abstract class DbManager {
 		return teams;
 	}
 
-	public static List<BTBGuild> readGuildsForTrackedTeam(int teamID, boolean requireGoLive) {
+	public static List<BTBGuild> readGuildsForTrackedTeam(int teamID, boolean requireGoLive,
+			boolean requireLogChannel) {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 		Map<String, Object> where = new HashMap<>();
 
@@ -511,6 +512,10 @@ public abstract class DbManager {
 		if (requireGoLive) {
 			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID),
 					"IS NOT NULL");
+		}
+
+		if (requireLogChannel) {
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_LOGCHANNELID), "IS NOT NULL");
 		}
 
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,
@@ -594,7 +599,8 @@ public abstract class DbManager {
 		return channels;
 	}
 
-	public static List<BTBGuild> readGuildsForTrackedChannel(int channelID, boolean requireGoLive) {
+	public static List<BTBGuild> readGuildsForTrackedChannel(int channelID, boolean requireGoLive,
+			boolean requireLogChannel) {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 
 		Map<String, Object> where = new HashMap<>();
@@ -604,6 +610,10 @@ public abstract class DbManager {
 		if (requireGoLive) {
 			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_GOLIVECHANNELID),
 					"IS NOT NULL");
+		}
+
+		if (requireLogChannel) {
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_LOGCHANNELID), "IS NOT NULL");
 		}
 
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,

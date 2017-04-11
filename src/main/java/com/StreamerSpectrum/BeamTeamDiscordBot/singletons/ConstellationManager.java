@@ -14,6 +14,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.StreamerSpectrum.BeamTeamDiscordBot.BTBMain;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
@@ -174,22 +176,27 @@ public abstract class ConstellationManager {
 				List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
 
 				for (TeamMembershipExpanded team : userTeams) {
-					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true));
+					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true, false));
+					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, false, true));
 				}
 
-				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true));
+				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true, false));
+				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, false, true));
 
 				if (!guilds.isEmpty()) {
 					if (payload.get("online").getAsBoolean()) {
-						logger.log(Level.INFO, String.format("%s is now live!", channel.user.username));
-
 						for (BTBGuild guild : guilds) {
-							JDAManager.sendGoLiveMessage(guild.getGoLiveChannelID(),
-									JDAManager.buildGoLiveEmbed(channel), channel);
+							if (StringUtils.isNotBlank(guild.getGoLiveChannelID())) {
+								JDAManager.sendGoLiveMessage(guild.getGoLiveChannelID(),
+										JDAManager.buildGoLiveEmbed(channel), channel);
+							}
+
+							if (StringUtils.isNotBlank(guild.getLogChannelID())) {
+								JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has gone ***live***!",
+										channel.user.username);
+							}
 						}
 					} else {
-						logger.log(Level.INFO, String.format("%s is now offline!", channel.user.username));
-
 						List<GoLiveMessage> messagesList = new ArrayList<>();
 
 						messagesList = DbManager.readAllGoLiveMessagesForChannel(channel.id);
@@ -201,6 +208,13 @@ public abstract class ConstellationManager {
 						}
 
 						DbManager.deleteGoLiveMessagesForChannel(channel.id);
+
+						for (BTBGuild guild : guilds) {
+							if (StringUtils.isNotBlank(guild.getLogChannelID())) {
+								JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has gone ***offline***!",
+										channel.user.username);
+							}
+						}
 					}
 				} else {
 					logger.log(Level.INFO, String.format("No one is tracking %s's channel.", channel.user.username));
@@ -233,6 +247,13 @@ public abstract class ConstellationManager {
 	private static void handleTeamMemberAccepted(LiveEvent event, JsonObject payload) {
 		// TODO: Make a "member accepted" announcement to the appropriate
 		// channels
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
+
+		for (BTBGuild guild : guilds) {
+			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has joined ***%s***!",
+					payload.get("username").getAsString(), team.token);
+		}
 
 		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
 			JDAManager.giveTeamRoleToUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
@@ -243,20 +264,13 @@ public abstract class ConstellationManager {
 	}
 
 	private static void handleTeamMemberInvited(LiveEvent event, JsonObject payload) {
-		try {
-			if (Files.notExists(Paths.get("payloads\\"))) {
-				new File("payloads\\").mkdir();
-			}
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
-			Logger logger = Logger.getLogger("payload-teamMemberInvited");
-			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
-			SimpleFormatter formatter = new SimpleFormatter();
-			fh.setFormatter(formatter);
-
-			logger.addHandler(fh);
-
-			logger.log(Level.INFO, payload.toString());
-		} catch (SecurityException | IOException e) {}
+		for (BTBGuild guild : guilds) {
+			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has been invited to join ***%s***!",
+					payload.get("username").getAsString(), team.token);
+		}
 		// TODO: Make a "member was invited" announcement to the appropriate
 		// channels
 	}
@@ -264,6 +278,13 @@ public abstract class ConstellationManager {
 	private static void handleTeamMemberRemoved(LiveEvent event, JsonObject payload) {
 		// TODO: Make a "member has left" announcement to the appropriate
 		// channels
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
+
+		for (BTBGuild guild : guilds) {
+			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has left ***%s***.",
+					payload.get("username").getAsString(), team.name);
+		}
 
 		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
 			JDAManager.removeTeamRoleFromUserOnAllGuilds(getIDFromEvent(event.data.channel), JDAManager
@@ -290,20 +311,14 @@ public abstract class ConstellationManager {
 	}
 
 	private static void handleTeamDeleted(LiveEvent event, JsonObject payload) {
-		try {
-			if (Files.notExists(Paths.get("payloads\\"))) {
-				new File("payloads\\").mkdir();
-			}
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
-			Logger logger = Logger.getLogger("payload-teamDeleted");
-			FileHandler fh = new FileHandler("payloads\\" + logger.getName() + ".json");
-			SimpleFormatter formatter = new SimpleFormatter();
-			fh.setFormatter(formatter);
+		for (BTBGuild guild : guilds) {
+			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has been deleted from Beam.", team.name);
+		}
 
-			logger.addHandler(fh);
-
-			logger.log(Level.INFO, payload.toString());
-		} catch (SecurityException | IOException e) {}
+		DbManager.deleteTeam(team.id);
 	}
 
 	private static void handleUserFollowed(LiveEvent event, JsonObject payload) {
@@ -331,9 +346,6 @@ public abstract class ConstellationManager {
 		logger.log(Level.INFO, String.format("Subscribing to %s's channel.", channel.token));
 
 		subscribeToEvent(String.format("channel:%d:update", channel.id));
-		subscribeToEvent(String.format("channel:%d:status", channel.id));
-		subscribeToEvent(String.format("chat:%d:StartStreaming", channel.id));
-		subscribeToEvent(String.format("chat:%d:StopStreaming", channel.id));
 	}
 
 	public static void subscribeToChannelFollowers(int channelID) {
@@ -342,17 +354,18 @@ public abstract class ConstellationManager {
 
 	public static void subscribeToTeam(BeamTeam team) {
 		logger.log(Level.INFO, String.format("Subscribing to team \"%s\" and its members' channels.", team.name));
-		List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
-
-		for (BeamTeamUser member : teamMembers) {
-			subscribeToChannel(member.channel);
-		}
 
 		subscribeToEvent(String.format("team:%d:memberAccepted", team.id));
 		subscribeToEvent(String.format("team:%d:memberInvited", team.id));
 		subscribeToEvent(String.format("team:%d:memberRemoved", team.id));
 		subscribeToEvent(String.format("team:%d:ownerChanged", team.id));
 		subscribeToEvent(String.format("team:%d:deleted", team.id));
+
+		List<BeamTeamUser> teamMembers = BeamManager.getTeamMembers(team);
+
+		for (BeamTeamUser member : teamMembers) {
+			subscribeToChannel(member.channel);
+		}
 	}
 
 	public static void subscribeToUser(int userID) {
@@ -371,7 +384,6 @@ public abstract class ConstellationManager {
 			@Override
 			public void onSuccess(LiveRequestReply result) {}
 		});
-		logger.log(Level.INFO, String.format("Successfully subscribed to %s", event));
 	}
 
 	private static void unsubscribeFromEvent(String event) {
@@ -386,7 +398,6 @@ public abstract class ConstellationManager {
 			@Override
 			public void onSuccess(LiveRequestReply result) {}
 		});
-		logger.log(Level.INFO, String.format("Successfully unsubscribed from %s", event));
 	}
 
 	private static int getIDFromEvent(String event) {
