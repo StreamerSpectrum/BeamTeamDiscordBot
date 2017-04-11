@@ -19,16 +19,18 @@ public class BTBGuild {
 	private String		name;
 	private String		goLiveChannelID						= null;
 	private String		logChannelID						= null;
+	private String		newMemberChannelID					= null;
 
 	private boolean		removeOfflineChannelAnnouncements	= false;
 
 	public BTBGuild(long id, int shardID, String name, String goLiveChannelID, String logChannelID,
-			boolean removeOfflineChannels) {
+			String newMemberChannelID, boolean removeOfflineChannels) {
 		this.id = id;
 		this.shardID = shardID;
 		this.name = name;
 		this.goLiveChannelID = goLiveChannelID;
 		this.logChannelID = logChannelID;
+		this.newMemberChannelID = newMemberChannelID;
 		this.removeOfflineChannelAnnouncements = removeOfflineChannels;
 	}
 
@@ -80,6 +82,16 @@ public class BTBGuild {
 		update();
 	}
 
+	public String getNewMemberChannelID() {
+		return newMemberChannelID;
+	}
+
+	public void setNewMemberChannelID(String newMemberChannelID) {
+		this.newMemberChannelID = newMemberChannelID;
+
+		update();
+	}
+
 	public boolean isRemoveOfflineChannelAnnouncements() {
 		return removeOfflineChannelAnnouncements;
 	}
@@ -101,6 +113,7 @@ public class BTBGuild {
 		values.put(Constants.GUILDS_COL_NAME, getName());
 		values.put(Constants.GUILDS_COL_GOLIVECHANNELID, getGoLiveChannelID());
 		values.put(Constants.GUILDS_COL_LOGCHANNELID, getLogChannelID());
+		values.put(Constants.GUILDS_COL_NEWMEMBERCHANNELID, getNewMemberChannelID());
 		values.put(Constants.GUILDS_COL_REMOVEOFFLINECHANNELANNOUNCEMENTS,
 				isRemoveOfflineChannelAnnouncements() ? 1 : 0);
 
@@ -173,6 +186,6 @@ public class BTBGuild {
 
 	public void addRole(String string, String string2) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

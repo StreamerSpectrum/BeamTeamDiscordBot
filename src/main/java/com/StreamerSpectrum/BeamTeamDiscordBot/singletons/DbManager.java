@@ -324,7 +324,7 @@ public abstract class DbManager {
 
 		if (!values.isEmpty()) {
 			guild = new BTBGuild(id, GuildManager.getShardID(id), values.get(0).get(1), values.get(0).get(2),
-					values.get(0).get(3), "1".equals((values.get(0).get(4))));
+					values.get(0).get(3), values.get(0).get(4), "1".equals((values.get(0).get(5))));
 		}
 
 		return guild;
@@ -337,7 +337,7 @@ public abstract class DbManager {
 		for (List<String> values : valuesList) {
 			guilds.add(
 					new BTBGuild(Long.parseLong(values.get(0)), GuildManager.getShardID(Long.parseLong(values.get(0))),
-							values.get(1), values.get(2), values.get(3), "1".equals((values.get(4)))));
+							values.get(1), values.get(2), values.get(3), values.get(4), "1".equals((values.get(5)))));
 		}
 
 		return guilds;
@@ -502,8 +502,8 @@ public abstract class DbManager {
 		return teams;
 	}
 
-	public static List<BTBGuild> readGuildsForTrackedTeam(int teamID, boolean requireGoLive,
-			boolean requireLogChannel) {
+	public static List<BTBGuild> readGuildsForTrackedTeam(int teamID, boolean requireGoLive, boolean requireLogChannel,
+			boolean requireNewMemberChannel) {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 		Map<String, Object> where = new HashMap<>();
 
@@ -518,6 +518,11 @@ public abstract class DbManager {
 			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_LOGCHANNELID), "IS NOT NULL");
 		}
 
+		if (requireNewMemberChannel) {
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_NEWMEMBERCHANNELID),
+					"IS NOT NULL");
+		}
+
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,
 				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDTEAMS, Constants.TABLE_GUILDS,
 						Constants.GUILDS_COL_ID, Constants.TABLE_TRACKEDTEAMS, Constants.TRACKEDTEAMS_COL_GUILDID),
@@ -526,7 +531,7 @@ public abstract class DbManager {
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
 					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2), values.get(3),
-					"1".equals(values.get(4)));
+					values.get(4), "1".equals(values.get(5)));
 
 			guilds.add(guild);
 		}
@@ -600,7 +605,7 @@ public abstract class DbManager {
 	}
 
 	public static List<BTBGuild> readGuildsForTrackedChannel(int channelID, boolean requireGoLive,
-			boolean requireLogChannel) {
+			boolean requireLogChannel, boolean requireNewMemberChannel) {
 		List<BTBGuild> guilds = new ArrayList<BTBGuild>();
 
 		Map<String, Object> where = new HashMap<>();
@@ -616,6 +621,11 @@ public abstract class DbManager {
 			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_LOGCHANNELID), "IS NOT NULL");
 		}
 
+		if (requireNewMemberChannel) {
+			where.put(String.format("%s.%s", Constants.TABLE_GUILDS, Constants.GUILDS_COL_NEWMEMBERCHANNELID),
+					"IS NOT NULL");
+		}
+
 		List<List<String>> valueLists = read(Constants.TABLE_GUILDS, null,
 				String.format("%s ON %s.%s = %s.%s", Constants.TABLE_TRACKEDCHANNELS, Constants.TABLE_GUILDS,
 						Constants.GUILDS_COL_ID, Constants.TABLE_TRACKEDCHANNELS,
@@ -625,7 +635,7 @@ public abstract class DbManager {
 		for (List<String> values : valueLists) {
 			BTBGuild guild = new BTBGuild(Long.parseLong(values.get(0)),
 					GuildManager.getShardID(Long.parseLong(values.get(0))), values.get(1), values.get(2), values.get(3),
-					"1".equals(values.get(4)));
+					values.get(4), "1".equals(values.get(5)));
 
 			guilds.add(guild);
 		}

@@ -23,6 +23,8 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveRemo
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.golive.GoLiveSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.log.LogRemove;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.log.LogSet;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.newmember.NewMemberRemove;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.newmember.NewMemberSet;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamAdd;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamList;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.team.TeamRemove;
@@ -99,7 +101,8 @@ public abstract class JDAManager {
 							new MemberInfo(), new FollowReport(), new MemberList(), new GoLiveSet(), new GoLiveRemove(),
 							new GoLiveDeleteOffline(), new ChannelAdd(), new ChannelRemove(), new ChannelList(),
 							new TeamRoleSet(), new TeamRoleRemove(), new TeamRoleList(), new TeamRoleDistribute(),
-							new LogSet(), new LogRemove(), new RestartConstellation())
+							new LogSet(), new LogRemove(), new NewMemberSet(), new NewMemberRemove(),
+							new RestartConstellation())
 					.build();
 		}
 

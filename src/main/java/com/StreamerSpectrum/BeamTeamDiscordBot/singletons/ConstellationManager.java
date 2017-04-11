@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.FileHandler;
@@ -18,13 +20,16 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.BTBMain;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamChannel;
+import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BTBBeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeamUser;
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.TeamMembershipExpanded;
+import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.BTBGuild;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.resource.GoLiveMessage;
 import com.google.gson.JsonObject;
 
+import net.dv8tion.jda.core.EmbedBuilder;
 import pro.beam.api.resource.constellation.events.EventHandler;
 import pro.beam.api.resource.constellation.events.LiveEvent;
 import pro.beam.api.resource.constellation.methods.LiveSubscribeMethod;
@@ -176,12 +181,12 @@ public abstract class ConstellationManager {
 				List<TeamMembershipExpanded> userTeams = BeamManager.getTeams(channel.userId);
 
 				for (TeamMembershipExpanded team : userTeams) {
-					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true, false));
-					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, false, true));
+					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, true, false, false));
+					guilds.addAll(DbManager.readGuildsForTrackedTeam(team.id, false, true, false));
 				}
 
-				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true, false));
-				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, false, true));
+				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, true, false, false));
+				guilds.addAll(DbManager.readGuildsForTrackedChannel(channel.id, false, true, false));
 
 				if (!guilds.isEmpty()) {
 					if (payload.get("online").getAsBoolean()) {
@@ -247,12 +252,39 @@ public abstract class ConstellationManager {
 	private static void handleTeamMemberAccepted(LiveEvent event, JsonObject payload) {
 		// TODO: Make a "member accepted" announcement to the appropriate
 		// channels
-		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		Set<BTBGuild> guilds = new HashSet<BTBGuild>();
+		guilds.addAll(DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true, false));
+		guilds.addAll(DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, false, true));
+
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {
-			JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has joined ***%s***!",
-					payload.get("username").getAsString(), team.token);
+			if (StringUtils.isNotBlank(guild.getLogChannelID())) {
+				JDAManager.sendMessage(guild.getLogChannelID(), "**%s** has joined ***%s***!",
+						payload.get("username").getAsString(), team.token);
+			}
+
+			if (StringUtils.isNotBlank(guild.getNewMemberChannelID())) {
+				BTBBeamUser member = BeamManager.getUser(payload.get("id").getAsInt());
+
+				JDAManager.sendMessage(guild.getNewMemberChannelID(),
+						"%s, please give a warm welcome to %s's newest member, %s!",
+						JDAManager.getJDA().getGuildById(Long.toString(guild.getID())).getPublicRole().getAsMention(),
+						team.name, member.username);
+				JDAManager.sendMessage(guild.getNewMemberChannelID(), new EmbedBuilder()
+						.setTitle(member.username, String.format("https://beam.pro/%s", member.username))
+						.setThumbnail(String.format("https://beam.pro/api/v1/users/%d/avatar?_=%d", member.id,
+								new Random().nextInt()))
+						.setDescription(StringUtils.isBlank(member.bio) ? "No bio" : member.bio)
+						.addField("Followers", Integer.toString(member.channel.numFollowers), true)
+						.addField("Views", Integer.toString(member.channel.viewersTotal), true)
+						.addField("Partnered", member.channel.partnered ? "Yes" : "No", true)
+						.addField("Joined Beam", member.createdAt.toString(), true)
+						.setImage(String.format("https://thumbs.beam.pro/channel/%d.small.jpg?_=%d", member.channel.id,
+								new Random().nextInt()))
+						.setFooter("Beam.pro", CommandHelper.BEAM_LOGO_URL).setTimestamp(Instant.now())
+						.setColor(CommandHelper.COLOR).build());
+			}
 		}
 
 		if (payload.has("social") && payload.get("social").getAsJsonObject().has("discord")) {
@@ -264,7 +296,8 @@ public abstract class ConstellationManager {
 	}
 
 	private static void handleTeamMemberInvited(LiveEvent event, JsonObject payload) {
-		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true,
+				false);
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {
@@ -278,7 +311,8 @@ public abstract class ConstellationManager {
 	private static void handleTeamMemberRemoved(LiveEvent event, JsonObject payload) {
 		// TODO: Make a "member has left" announcement to the appropriate
 		// channels
-		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true,
+				false);
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {
@@ -311,7 +345,8 @@ public abstract class ConstellationManager {
 	}
 
 	private static void handleTeamDeleted(LiveEvent event, JsonObject payload) {
-		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true);
+		List<BTBGuild> guilds = DbManager.readGuildsForTrackedTeam(getIDFromEvent(event.data.channel), false, true,
+				false);
 		BeamTeam team = DbManager.readTeam(getIDFromEvent(event.data.channel));
 
 		for (BTBGuild guild : guilds) {

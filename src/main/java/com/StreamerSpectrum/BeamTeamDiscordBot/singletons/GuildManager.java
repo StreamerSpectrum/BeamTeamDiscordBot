@@ -58,7 +58,7 @@ public abstract class GuildManager {
 		if (storedGuild == null) {
 			storedGuild = new BTBGuild(id,
 					guild.getJDA().getShardInfo() == null ? 0 : guild.getJDA().getShardInfo().getShardId(),
-					guild.getName(), null, null, false);
+					guild.getName(), null, null, null, false);
 			addGuild(storedGuild);
 		}
 

@@ -26,6 +26,7 @@ public abstract class Constants {
 	public static final String	GUILDS_COL_NAME									= "Name";
 	public static final String	GUILDS_COL_GOLIVECHANNELID						= "GoLiveChannelID";
 	public static final String	GUILDS_COL_LOGCHANNELID							= "LogChannelID";
+	public static final String	GUILDS_COL_NEWMEMBERCHANNELID					= "NewMemberChannelID";
 	public static final String	GUILDS_COL_REMOVEOFFLINECHANNELANNOUNCEMENTS	= "RemoveOfflineChannels";
 
 	public static final String	TEAMROLES_COL_GUILDID							= "GuildID";
