@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.discord.command.CommandHelper;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.ConstellationManager;
+import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.DbManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.GuildManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
 
@@ -35,6 +37,10 @@ public class TeamRemove extends Command {
 					} else {
 						JDAManager.sendMessage(event,
 								String.format("%s was not found in the list of tracked teams.", team.name));
+					}
+					
+					if (DbManager.readGuildsForTrackedTeam(team.id, false, false, false).isEmpty()) {
+						ConstellationManager.unsubscribeFromTeam(team);
 					}
 				}
 			}

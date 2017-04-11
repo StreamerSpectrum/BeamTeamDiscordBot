@@ -350,12 +350,8 @@ public abstract class ConstellationManager {
 		}
 
 		DbManager.deleteTeam(team.id);
-
-		unsubscribeFromEvent(String.format("team:%d:memberAccepted", team.id));
-		unsubscribeFromEvent(String.format("team:%d:memberInvited", team.id));
-		unsubscribeFromEvent(String.format("team:%d:memberRemoved", team.id));
-		unsubscribeFromEvent(String.format("team:%d:ownerChanged", team.id));
-		unsubscribeFromEvent(String.format("team:%d:deleted", team.id));
+		
+		unsubscribeFromTeam(team);
 	}
 
 	private static void handleUserFollowed(LiveEvent event, JsonObject payload) {
@@ -423,6 +419,14 @@ public abstract class ConstellationManager {
 		for (BeamTeamUser member : teamMembers) {
 			subscribeToChannel(member.channel);
 		}
+	}
+	
+	public static void unsubscribeFromTeam(BeamTeam team) {
+		unsubscribeFromEvent(String.format("team:%d:memberAccepted", team.id));
+		unsubscribeFromEvent(String.format("team:%d:memberInvited", team.id));
+		unsubscribeFromEvent(String.format("team:%d:memberRemoved", team.id));
+		unsubscribeFromEvent(String.format("team:%d:ownerChanged", team.id));
+		unsubscribeFromEvent(String.format("team:%d:deleted", team.id));
 	}
 
 	public static void subscribeToUser(int userID) {
