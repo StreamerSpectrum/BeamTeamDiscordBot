@@ -98,12 +98,14 @@ public class BTBGuild {
 			List<BTBBeamChannel> channels = getTrackedChannels();
 
 			for (BTBBeamChannel channel : channels) {
-				channel = BeamManager.getChannel(channel.id);
+				if (!alreadyAnnounced.contains(channel)) {
+					channel = BeamManager.getChannel(channel.id);
 
-				if (channel.online && !alreadyAnnounced.contains(channel)) {
-					sendGoLiveMessage(channel);
+					if (channel.online) {
+						sendGoLiveMessage(channel);
 
-					alreadyAnnounced.add(channel);
+						alreadyAnnounced.add(channel);
+					}
 				}
 			}
 		}

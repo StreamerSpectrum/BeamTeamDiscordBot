@@ -105,12 +105,14 @@ public abstract class ConstellationManager {
 			List<BTBBeamChannel> channels = guild.getTrackedChannels();
 
 			for (BTBBeamChannel channel : channels) {
-				channel = BeamManager.getChannel(channel.id);
+				if (!alreadyAnnounced.contains(channel)) {
+					channel = BeamManager.getChannel(channel.id);
 
-				if (channel.online && !alreadyAnnounced.contains(channel)) {
-					guild.sendGoLiveMessage(channel);
+					if (channel.online) {
+						guild.sendGoLiveMessage(channel);
 
-					alreadyAnnounced.add(channel);
+						alreadyAnnounced.add(channel);
+					}
 				}
 			}
 		}
