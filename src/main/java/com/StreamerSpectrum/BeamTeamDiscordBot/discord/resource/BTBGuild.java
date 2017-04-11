@@ -13,7 +13,7 @@ import com.StreamerSpectrum.BeamTeamDiscordBot.beam.resource.BeamTeam;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.ConstellationManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.DbManager;
 import com.StreamerSpectrum.BeamTeamDiscordBot.singletons.JDAManager;
-import com.auth0.jwt.internal.org.apache.commons.lang3.StringUtils;;
+import com.auth0.jwt.internal.org.apache.commons.lang3.StringUtils;
 
 public class BTBGuild {
 

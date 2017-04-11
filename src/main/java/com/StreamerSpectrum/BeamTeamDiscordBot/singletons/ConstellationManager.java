@@ -350,6 +350,12 @@ public abstract class ConstellationManager {
 		}
 
 		DbManager.deleteTeam(team.id);
+
+		unsubscribeFromEvent(String.format("team:%d:memberAccepted", team.id));
+		unsubscribeFromEvent(String.format("team:%d:memberInvited", team.id));
+		unsubscribeFromEvent(String.format("team:%d:memberRemoved", team.id));
+		unsubscribeFromEvent(String.format("team:%d:ownerChanged", team.id));
+		unsubscribeFromEvent(String.format("team:%d:deleted", team.id));
 	}
 
 	private static void handleUserFollowed(LiveEvent event, JsonObject payload) {
